@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>AI Dashboard - Data Model</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #1d1d1f;
+      --bg-secondary: #2d2d2f;
+      --bg-tertiary: #3d3d3f;
+      --border: #424245;
+      --text-primary: #f5f5f7;
+      --text-secondary: #86868b;
+      --text-tertiary: #636366;
+      --accent: #0a84ff;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    #claude-content {
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .mockup {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .mockup-header {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup-body {
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>AI Dashboard Design - Data Model</h1>
+  </div>
+  <div id="claude-content">
+    <h2>Data Model</h2>
+    <p class="subtitle">Core entities, relationships, and key fields</p>
+
+    <div class="mockup">
+      <div class="mockup-header">Entity Relationship Diagram</div>
+      <div class="mockup-body" style="padding: 24px; font-size: 12px;">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+
+          <!-- Column 1: Jira Entities -->
+          <div>
+            <div class="label" style="margin-bottom: 12px; color: #3b82f6;">Jira-Sourced</div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #3b82f6; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">Issue</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>jira_key <span style="color: #64748b;">"PROJ-123"</span></div>
+                <div>title</div>
+                <div>type <span style="color: #64748b;">bug | story | task</span></div>
+                <div>assignee</div>
+                <div>story_points</div>
+                <div>sprint_id <span style="color: #64748b;">FK &#8594; Sprint</span></div>
+                <div>created_at</div>
+                <div>resolved_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #3b82f6; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">IssueTransition</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>issue_id <span style="color: #64748b;">FK &#8594; Issue</span></div>
+                <div>from_status <span style="color: #64748b;">"To Do"</span></div>
+                <div>to_status <span style="color: #64748b;">"In Progress"</span></div>
+                <div>transitioned_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #3b82f6; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">Sprint</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>jira_sprint_id</div>
+                <div>name</div>
+                <div>start_date</div>
+                <div>end_date</div>
+                <div>committed_points</div>
+                <div>completed_points</div>
+              </div>
+            </div>
+
+            <div style="background: #1e293b; border: 2px solid #3b82f6; border-radius: 8px; padding: 14px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">TimeLog</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>issue_id <span style="color: #64748b;">FK &#8594; Issue</span></div>
+                <div>author</div>
+                <div>time_spent_seconds</div>
+                <div>logged_at</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: GitHub + git-ai Entities -->
+          <div>
+            <div class="label" style="margin-bottom: 12px; color: #10b981;">GitHub + git-ai Sourced</div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #10b981; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">PullRequest</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>github_pr_number</div>
+                <div>repo</div>
+                <div>author</div>
+                <div>issue_id <span style="color: #64748b;">FK &#8594; Issue (nullable)</span></div>
+                <div>lines_added</div>
+                <div>lines_removed</div>
+                <div>ai_lines_added <span style="color: #10b981;">git-ai</span></div>
+                <div>ai_lines_removed <span style="color: #10b981;">git-ai</span></div>
+                <div>ai_percentage <span style="color: #10b981;">computed</span></div>
+                <div>created_at</div>
+                <div>first_review_requested_at</div>
+                <div>first_reviewed_at</div>
+                <div>approved_at</div>
+                <div>merged_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #10b981; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">Commit</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>sha</div>
+                <div>pr_id <span style="color: #64748b;">FK &#8594; PullRequest</span></div>
+                <div>author</div>
+                <div>lines_added</div>
+                <div>lines_removed</div>
+                <div>committed_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #10b981; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">AIAttribution</strong>
+              <span
+                style="color: #10b981; font-size: 10px; background: #10b98122; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">git-ai</span>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>commit_id <span style="color: #64748b;">FK &#8594; Commit</span></div>
+                <div>agent <span style="color: #64748b;">cursor | claude | copilot</span></div>
+                <div>model <span style="color: #64748b;">sonnet-4 | gpt-4 | ...</span></div>
+                <div>ai_lines_start</div>
+                <div>ai_lines_end</div>
+                <div>file_path</div>
+                <div>total_ai_lines</div>
+                <div>total_lines_in_commit</div>
+                <div>ai_percentage</div>
+              </div>
+            </div>
+
+            <div style="background: #1e293b; border: 2px solid #10b981; border-radius: 8px; padding: 14px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">ReviewComment</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>pr_id <span style="color: #64748b;">FK &#8594; PullRequest</span></div>
+                <div>author</div>
+                <div>file_path</div>
+                <div>line_number</div>
+                <div>is_on_ai_code <span style="color: #10b981;">enriched</span></div>
+                <div>review_round <span style="color: #10b981;">enriched</span></div>
+                <div>created_at</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Webex + Computed -->
+          <div>
+            <div class="label" style="margin-bottom: 12px; color: #f59e0b;">Webex + Computed</div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #f59e0b; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">WebexMessage</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>webex_message_id</div>
+                <div>room_id</div>
+                <div>room_name</div>
+                <div>pr_id <span style="color: #64748b;">FK &#8594; PullRequest (nullable)</span></div>
+                <div>author</div>
+                <div>parent_message_id <span style="color: #64748b;">thread</span></div>
+                <div>is_review_request <span style="color: #f59e0b;">enriched</span></div>
+                <div>created_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #8b5cf6; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">IssueCycleMetrics</strong>
+              <span
+                style="color: #8b5cf6; font-size: 10px; background: #8b5cf622; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">computed</span>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>issue_id <span style="color: #64748b;">FK &#8594; Issue</span></div>
+                <div>coding_time_hours</div>
+                <div>review_time_hours</div>
+                <div>waiting_time_hours</div>
+                <div>total_cycle_time_hours</div>
+                <div>is_ai_assisted <span style="color: #64748b;">bool</span></div>
+                <div>ai_percentage <span style="color: #64748b;">avg across PRs</span></div>
+                <div>review_rounds</div>
+                <div>ai_comment_density</div>
+                <div>human_comment_density</div>
+                <div>webex_response_time_hours</div>
+                <div>computed_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #ef4444; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">AIQualityMetrics</strong>
+              <span
+                style="color: #ef4444; font-size: 10px; background: #ef444422; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">computed
+                per PR</span>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>pr_id <span style="color: #64748b;">FK &#8594; PullRequest</span></div>
+                <div>ai_lines_unchanged</div>
+                <div>ai_lines_modified</div>
+                <div>unmodified_ai_ratio <span style="color: #ef4444;">computed</span></div>
+                <div>ai_review_blind_accepts</div>
+                <div>ai_review_total_threads</div>
+                <div>followup_fixes_24h</div>
+                <div>test_lines_added</div>
+                <div>has_tests_for_ai_code <span style="color: #64748b;">bool</span></div>
+                <div>reverted_within_7d <span style="color: #64748b;">bool</span></div>
+                <div>defect_linked <span style="color: #64748b;">bool</span></div>
+                <div>computed_at</div>
+              </div>
+            </div>
+
+            <div
+              style="background: #1e293b; border: 2px solid #94a3b8; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">Developer</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>name</div>
+                <div>github_username</div>
+                <div>jira_account_id</div>
+                <div>webex_person_id</div>
+              </div>
+            </div>
+
+            <div style="background: #1e293b; border: 2px solid #94a3b8; border-radius: 8px; padding: 14px;">
+              <strong style="color: #e2e8f0; font-size: 14px;">Repository</strong>
+              <div style="margin-top: 8px; color: #94a3b8; line-height: 1.9; font-family: monospace;">
+                <div>id <span style="color: #64748b;">PK</span></div>
+                <div>github_repo <span style="color: #64748b;">owner/name</span></div>
+                <div>webex_review_room_id</div>
+                <div>webex_discussion_room_id</div>
+                <div>jira_project_key</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Relationships Legend -->
+        <div style="margin-top: 24px; background: #1e293b; border-radius: 8px; padding: 16px;">
+          <strong style="color: #e2e8f0;">Key Relationships</strong>
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; color: #94a3b8; font-size: 12px; line-height: 2;">
+            <div>Issue <span style="color: #64748b;">1 &#8594; N</span> PullRequest <span style="color: #475569;">(via
+                branch naming or PR body link)</span></div>
+            <div>PullRequest <span style="color: #64748b;">1 &#8594; N</span> Commit</div>
+            <div>Commit <span style="color: #64748b;">1 &#8594; N</span> AIAttribution <span
+                style="color: #475569;">(per-file ranges)</span></div>
+            <div>PullRequest <span style="color: #64748b;">1 &#8594; N</span> ReviewComment</div>
+            <div>Issue <span style="color: #64748b;">1 &#8594; N</span> IssueTransition</div>
+            <div>Issue <span style="color: #64748b;">1 &#8594; N</span> TimeLog</div>
+            <div>Sprint <span style="color: #64748b;">1 &#8594; N</span> Issue</div>
+            <div>PullRequest <span style="color: #64748b;">1 &#8594; N</span> WebexMessage <span
+                style="color: #475569;">(matched by PR URL in message)</span></div>
+            <div>Issue <span style="color: #64748b;">1 &#8594; 1</span> IssueCycleMetrics <span
+                style="color: #475569;">(materialized view)</span></div>
+            <div>PullRequest <span style="color: #64748b;">1 &#8594; 1</span> AIQualityMetrics <span
+                style="color: #475569;">(materialized per PR)</span></div>
+            <div>Developer <span style="color: #64748b;">identity map across</span> GitHub, Jira, Webex</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Enrichment Notes -->
+    <div class="section" style="margin-top: 20px;">
+      <h3>Enrichment Logic</h3>
+      <div style="color: #94a3b8; font-size: 13px; line-height: 2;">
+        <ul style="padding-left: 20px;">
+          <li><strong style="color: #e2e8f0;">Issue &#8596; PR linking:</strong> Match via Jira key in branch name
+            (e.g., <code
+              style="color: #fbbf24; background: #1e293b; padding: 1px 4px; border-radius: 3px;">feature/PROJ-123-...</code>)
+            or PR body</li>
+          <li><strong style="color: #e2e8f0;">Review comment &#8596; AI code:</strong> Match comment's file_path +
+            line_number against AIAttribution ranges for that commit</li>
+          <li><strong style="color: #e2e8f0;">Webex &#8596; PR linking:</strong> Detect PR URLs in Webex messages to
+            associate with PullRequest records</li>
+          <li><strong style="color: #e2e8f0;">IssueCycleMetrics:</strong> Recomputed on each new event (transition, PR
+            merge, review) for the affected issue</li>
+          <li><strong style="color: #ef4444;">AIQualityMetrics:</strong> Computed per PR on merge. Compares git-ai
+            checkpoint snapshot against final committed code for unmodified ratio. Monitors for reverts and bug-linked
+            issues within 7-day window post-merge. AI review thread resolution times from GitHub timestamps.</li>
+          <li><strong style="color: #e2e8f0;">Developer identity:</strong> Single mapping table unifies GitHub username,
+            Jira account, and Webex person ID</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

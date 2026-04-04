@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>AI Dashboard - Dashboard Views</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #1d1d1f;
+      --bg-secondary: #2d2d2f;
+      --bg-tertiary: #3d3d3f;
+      --border: #424245;
+      --text-primary: #f5f5f7;
+      --text-secondary: #86868b;
+      --text-tertiary: #636366;
+      --accent: #0a84ff;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    #claude-content {
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .mockup {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .mockup-header {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mockup-body {
+      padding: 1.5rem;
+    }
+
+    .placeholder {
+      background: var(--bg-tertiary);
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>AI Dashboard Design - Dashboard Views</h1>
+  </div>
+  <div id="claude-content">
+    <h2>Dashboard Views</h2>
+    <p class="subtitle">Page structure and layout for each dashboard view</p>
+
+    <!-- Global Controls -->
+    <div class="section">
+      <h3 style="color: #94a3b8;">Global Controls (present on every page)</h3>
+      <div class="mockup">
+        <div class="mockup-header">Top Bar</div>
+        <div class="mockup-body" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div
+                style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; color: #e2e8f0; font-size: 13px;">
+                Date Range: <span style="color: #3b82f6;">Mar 1 &#8211; Mar 31</span> &#9662;</div>
+              <div
+                style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; color: #e2e8f0; font-size: 13px;">
+                Granularity: <span style="color: #3b82f6;">Weekly</span> &#9662;</div>
+              <div
+                style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; color: #e2e8f0; font-size: 13px;">
+                Repo: <span style="color: #3b82f6;">All</span> &#9662;</div>
+              <div
+                style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; color: #e2e8f0; font-size: 13px;">
+                Developer: <span style="color: #3b82f6;">All</span> &#9662;</div>
+            </div>
+            <div
+              style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; color: #64748b; font-size: 13px;">
+              &#8635; Sync Now</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: Overview -->
+    <div class="section">
+      <h3 style="color: #3b82f6;">View 1: Overview (Landing Page)</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">Executive-friendly snapshot. Answers: "How are we
+        doing at a glance?"</p>
+      <div class="mockup">
+        <div class="mockup-header">Overview Dashboard</div>
+        <div class="mockup-body" style="padding: 20px;">
+          <!-- KPI Cards Row -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Avg Cycle
+                Time</div>
+              <div style="color: #e2e8f0; font-size: 28px; font-weight: bold; margin: 6px 0;">4.2d</div>
+              <div style="color: #10b981; font-size: 12px;">&#8595; 18% vs last period</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">AI Code %
+              </div>
+              <div style="color: #e2e8f0; font-size: 28px; font-weight: bold; margin: 6px 0;">34%</div>
+              <div style="color: #10b981; font-size: 12px;">&#8593; 8% vs last period</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Sprint
+                Completion</div>
+              <div style="color: #e2e8f0; font-size: 28px; font-weight: bold; margin: 6px 0;">87%</div>
+              <div style="color: #fbbf24; font-size: 12px;">&#8594; same as last period</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Review
+                Pickup</div>
+              <div style="color: #e2e8f0; font-size: 28px; font-weight: bold; margin: 6px 0;">6.5h</div>
+              <div style="color: #ef4444; font-size: 12px;">&#8593; 2h vs last period</div>
+            </div>
+          </div>
+          <!-- Charts Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold; margin-bottom: 12px;">Cycle Time Trend
+              </div>
+              <div style="height: 120px; display: flex; align-items: flex-end; gap: 6px; padding: 0 8px;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div
+                    style="width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 3px 3px 0 0; height: 90px;">
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">W1</span>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div
+                    style="width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 3px 3px 0 0; height: 75px;">
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">W2</span>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div
+                    style="width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 3px 3px 0 0; height: 80px;">
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">W3</span>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div
+                    style="width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 3px 3px 0 0; height: 55px;">
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">W4</span>
+                </div>
+              </div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold; margin-bottom: 12px;">Time Distribution
+                (Avg)</div>
+              <div style="display: flex; height: 40px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                <div
+                  style="background: #3b82f6; flex: 3; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">
+                  Coding 30%</div>
+                <div
+                  style="background: #8b5cf6; flex: 4.5; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">
+                  Review 45%</div>
+                <div
+                  style="background: #f59e0b; flex: 2.5; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">
+                  Wait 25%</div>
+              </div>
+              <div style="color: #64748b; font-size: 11px; text-align: center;">Review is the biggest time consumer
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Delivery -->
+    <div class="section">
+      <h3 style="color: #3b82f6;">View 2: Delivery</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">Answers: "Are we delivering faster and more
+        reliably?"</p>
+      <div class="mockup">
+        <div class="mockup-header">Delivery Dashboard</div>
+        <div class="mockup-body" style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Velocity Trend</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Story points per sprint, with AI-assisted
+                vs non-AI overlay</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Stacked bar chart</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Sprint Completion Rate</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">% done vs committed, trend over sprints
+              </div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Line chart with target line</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">PR Throughput &amp; Merge Rate</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">PRs opened vs merged per period</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Dual-axis chart</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Cycle Time Breakdown</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Stacked: coding + review + waiting over
+                time</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Stacked area chart</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: Bottlenecks -->
+    <div class="section">
+      <h3 style="color: #8b5cf6;">View 3: Bottlenecks</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">Answers: "Where is time being spent and where is
+        work getting stuck?"</p>
+      <div class="mockup">
+        <div class="mockup-header">Bottlenecks Dashboard</div>
+        <div class="mockup-body" style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Time-in-Stage (Team &#8594; Dev
+                drill-down)</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Click team bar to expand per-developer
+                breakdown</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Stacked horizontal bar (clickable)</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Review Queue &amp; Pickup Time</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Current queue depth + avg pickup trend
+              </div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Combo: bar (queue) + line (pickup time)
+              </div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Rework Rate</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">% PRs needing changes + avg review rounds
+              </div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Line chart</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Webex Response Times</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Time to acknowledge in review space +
+                communication-to-action gap</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Dual line chart</div>
+            </div>
+          </div>
+          <!-- Stuck Items Table -->
+          <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+            <div style="color: #e2e8f0; font-size: 13px; font-weight: bold; margin-bottom: 12px;">Currently Stuck Items
+            </div>
+            <div style="color: #64748b; font-size: 11px; margin-bottom: 8px;">Issues and PRs exceeding normal thresholds
+            </div>
+            <table style="width: 100%; font-size: 12px; color: #94a3b8; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #334155; color: #64748b;">
+                <th style="text-align: left; padding: 8px;">Item</th>
+                <th style="text-align: left; padding: 8px;">Stage</th>
+                <th style="text-align: left; padding: 8px;">Time in Stage</th>
+                <th style="text-align: left; padding: 8px;">Assignee</th>
+                <th style="text-align: left; padding: 8px;">Action</th>
+              </tr>
+              <tr style="border-bottom: 1px solid #1e293b;">
+                <td style="padding: 8px; color: #e2e8f0;">PR #142 - Auth refactor</td>
+                <td style="padding: 8px;"><span
+                    style="background: #7c3aed33; color: #a78bfa; padding: 2px 8px; border-radius: 4px;">In
+                    Review</span></td>
+                <td style="padding: 8px; color: #ef4444;">5 days</td>
+                <td style="padding: 8px;">@jane</td>
+                <td style="padding: 8px;"><span
+                    style="color: #3b82f6; cursor: pointer; text-decoration: underline;">Nudge via Webex</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; color: #e2e8f0;">PROJ-891 - API migration</td>
+                <td style="padding: 8px;"><span
+                    style="background: #dc262633; color: #f87171; padding: 2px 8px; border-radius: 4px;">Blocked</span>
+                </td>
+                <td style="padding: 8px; color: #ef4444;">3 days</td>
+                <td style="padding: 8px;">@bob</td>
+                <td style="padding: 8px;"><span
+                    style="color: #3b82f6; cursor: pointer; text-decoration: underline;">Nudge via Webex</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: AI Impact -->
+    <div class="section">
+      <h3 style="color: #10b981;">View 4: AI Impact</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">Answers: "How is AI helping?"</p>
+      <div class="mockup">
+        <div class="mockup-header">AI Impact Dashboard</div>
+        <div class="mockup-body" style="padding: 20px;">
+          <!-- KPI Cards -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">AI Code Merged</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">34%</div>
+              <div style="color: #64748b; font-size: 11px;">of total lines this period</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Top Agent</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">Claude Code</div>
+              <div style="color: #64748b; font-size: 11px;">58% of AI commits</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">AI Coding Time Saved</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">1.8d</div>
+              <div style="color: #64748b; font-size: 11px;">avg faster than non-AI issues</div>
+            </div>
+          </div>
+          <!-- Charts -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">AI Code % Trend</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">% of AI-generated lines merged over time,
+                by repo</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Multi-line chart (one per repo)</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">AI vs Human: Review Quality</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Comment density + revision rounds
+                comparison</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Grouped bar chart (AI vs Human
+                side-by-side)</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Tool &amp; Model Adoption</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Which agents and models the team uses over
+                time</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Stacked area chart by agent</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">AI Productivity Comparison</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Cycle time: AI-assisted vs non-AI issues,
+                by type</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Grouped bar: Bug (AI vs non) | Story (AI
+                vs non)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 5: AI Quality & Oversight -->
+    <div class="section">
+      <h3 style="color: #ef4444;">View 5: AI Quality &amp; Oversight</h3>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">Answers: "Is AI-generated code meeting our
+        engineering standards?"</p>
+      <div class="mockup">
+        <div class="mockup-header">AI Quality &amp; Oversight Dashboard</div>
+        <div class="mockup-body" style="padding: 20px;">
+          <!-- KPI Cards -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">AI Defect Rate</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">12%</div>
+              <div style="color: #ef4444; font-size: 11px;">&#8593; 4% vs human code defect rate (8%)</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Unmodified AI Ratio</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">68%</div>
+              <div style="color: #fbbf24; font-size: 11px;">&#9888; Above 50% threshold</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 14px; text-align: center;">
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase;">Review Depth Trend</div>
+              <div style="color: #e2e8f0; font-size: 24px; font-weight: bold; margin: 4px 0;">&#8595; 22%</div>
+              <div style="color: #ef4444; font-size: 11px;">Declining on AI-heavy PRs</div>
+            </div>
+          </div>
+          <!-- Charts -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">AI Code Quality</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Defect rate + revert rate: AI code vs human
+                code</div>
+              <div
+                style="height: 100px; margin-top: 12px; display: flex; align-items: flex-end; gap: 16px; padding: 0 16px;">
+                <div style="flex: 1; text-align: center;">
+                  <div style="display: flex; gap: 4px; justify-content: center; align-items: flex-end; height: 80px;">
+                    <div style="width: 30px; background: #ef4444; border-radius: 3px 3px 0 0; height: 48px;"
+                      title="AI: 12%"></div>
+                    <div style="width: 30px; background: #3b82f6; border-radius: 3px 3px 0 0; height: 32px;"
+                      title="Human: 8%"></div>
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">Defect Rate</span>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                  <div style="display: flex; gap: 4px; justify-content: center; align-items: flex-end; height: 80px;">
+                    <div style="width: 30px; background: #ef4444; border-radius: 3px 3px 0 0; height: 36px;"
+                      title="AI: 9%"></div>
+                    <div style="width: 30px; background: #3b82f6; border-radius: 3px 3px 0 0; height: 16px;"
+                      title="Human: 4%"></div>
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">Revert Rate</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; justify-content: center; margin-top: 8px; font-size: 10px;">
+                <span style="color: #ef4444;">&#9632; AI Code</span>
+                <span style="color: #3b82f6;">&#9632; Human Code</span>
+              </div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Code Understanding</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Unmodified AI code ratio trend (lower is
+                better)</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Line chart with team-defined threshold
+                line at 50%</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Review Thoroughness</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Review depth + AI blind acceptance rate
+                over time</div>
+              <div class="placeholder" style="height: 100px; margin-top: 12px;">Dual line chart (comment depth &#8595; +
+                blind accept % &#8593;)</div>
+            </div>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+              <div style="color: #e2e8f0; font-size: 13px; font-weight: bold;">Test Rigor</div>
+              <div style="color: #64748b; font-size: 11px; margin-top: 4px;">Test-lines-per-code-line: AI PRs vs non-AI
+                PRs</div>
+              <div
+                style="height: 100px; margin-top: 12px; display: flex; align-items: flex-end; gap: 16px; padding: 0 16px;">
+                <div style="flex: 1; text-align: center;">
+                  <div style="display: flex; gap: 4px; justify-content: center; align-items: flex-end; height: 80px;">
+                    <div style="width: 30px; background: #ef4444; border-radius: 3px 3px 0 0; height: 28px;"
+                      title="AI PRs: 0.3"></div>
+                    <div style="width: 30px; background: #3b82f6; border-radius: 3px 3px 0 0; height: 56px;"
+                      title="Non-AI PRs: 0.7"></div>
+                  </div>
+                  <span style="color: #64748b; font-size: 10px;">Test Lines / Code Line</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; justify-content: center; margin-top: 8px; font-size: 10px;">
+                <span style="color: #ef4444;">&#9632; AI PRs</span>
+                <span style="color: #3b82f6;">&#9632; Non-AI PRs</span>
+              </div>
+            </div>
+          </div>
+          <!-- Oversight Flags Table -->
+          <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+            <div style="color: #e2e8f0; font-size: 13px; font-weight: bold; margin-bottom: 12px;">Oversight Flags</div>
+            <div style="color: #64748b; font-size: 11px; margin-bottom: 8px;">PRs that may need additional human review
+            </div>
+            <table style="width: 100%; font-size: 12px; color: #94a3b8; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #334155; color: #64748b;">
+                <th style="text-align: left; padding: 8px;">PR</th>
+                <th style="text-align: left; padding: 8px;">Author</th>
+                <th style="text-align: left; padding: 8px;">AI %</th>
+                <th style="text-align: left; padding: 8px;">Human Edits</th>
+                <th style="text-align: left; padding: 8px;">Tests Added</th>
+                <th style="text-align: left; padding: 8px;">Flag</th>
+              </tr>
+              <tr style="border-bottom: 1px solid #1e293b;">
+                <td style="padding: 8px; color: #e2e8f0;">PR #287 - Config handler</td>
+                <td style="padding: 8px;">@alice</td>
+                <td style="padding: 8px; color: #ef4444;">92%</td>
+                <td style="padding: 8px; color: #ef4444;">0 lines</td>
+                <td style="padding: 8px; color: #ef4444;">None</td>
+                <td style="padding: 8px;"><span
+                    style="background: #ef444433; color: #f87171; padding: 2px 8px; border-radius: 4px;">High AI + No
+                    edits + No tests</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; color: #e2e8f0;">PR #301 - Auth middleware</td>
+                <td style="padding: 8px;">@bob</td>
+                <td style="padding: 8px; color: #fbbf24;">85%</td>
+                <td style="padding: 8px; color: #fbbf24;">4 lines</td>
+                <td style="padding: 8px; color: #ef4444;">None</td>
+                <td style="padding: 8px;"><span
+                    style="background: #fbbf2433; color: #fbbf24; padding: 2px 8px; border-radius: 4px;">High AI +
+                    Minimal edits</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="section" style="margin-top: 24px;">
+      <h3>Navigation Structure</h3>
+      <div style="color: #94a3b8; font-size: 13px; line-height: 2;">
+        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+          <div style="background: #1e293b; border-radius: 8px; padding: 16px; flex: 1; min-width: 200px;">
+            <strong style="color: #e2e8f0;">Sidebar Nav</strong>
+            <ul style="padding-left: 16px; margin-top: 8px;">
+              <li><span style="color: #3b82f6;">Overview</span> &#8212; KPI cards + summary charts</li>
+              <li><span style="color: #3b82f6;">Delivery</span> &#8212; velocity, throughput, cycle time</li>
+              <li><span style="color: #8b5cf6;">Bottlenecks</span> &#8212; time-in-stage, queue, stuck items</li>
+              <li><span style="color: #10b981;">AI Impact</span> &#8212; contribution, review quality, tools</li>
+              <li><span style="color: #ef4444;">AI Quality &amp; Oversight</span> &#8212; defect rate, copy-paste flags,
+                review depth</li>
+            </ul>
+          </div>
+          <div style="background: #1e293b; border-radius: 8px; padding: 16px; flex: 1; min-width: 200px;">
+            <strong style="color: #e2e8f0;">Drill-Down Pattern</strong>
+            <ul style="padding-left: 16px; margin-top: 8px;">
+              <li>Click any chart segment &#8594; filter to that dimension</li>
+              <li>Team view &#8594; click developer &#8594; developer detail</li>
+              <li>Developer detail &#8594; click issue &#8594; issue timeline</li>
+              <li>Issue timeline shows full stage-by-stage breakdown</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stretch: Webex Actions -->
+    <div class="section" style="margin-top: 16px; opacity: 0.7;">
+      <h3 style="color: #f59e0b;">Stretch: Webex Actions</h3>
+      <div style="color: #94a3b8; font-size: 13px;">
+        <ul style="line-height: 2; padding-left: 20px;">
+          <li><strong style="color: #e2e8f0;">Automated alerts</strong> &#8212; configurable via config file; post to
+            review space when thresholds exceeded</li>
+          <li><strong style="color: #e2e8f0;">"Nudge via Webex" button</strong> &#8212; on stuck items table; manager
+            clicks to send manual reminder</li>
+          <li><strong style="color: #e2e8f0;">Escalation to discussion channel</strong> &#8212; if no response in review
+            space after threshold</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>AI Dashboard - Metrics & Formulas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #1d1d1f;
+      --bg-secondary: #2d2d2f;
+      --bg-tertiary: #3d3d3f;
+      --border: #424245;
+      --text-primary: #f5f5f7;
+      --text-secondary: #86868b;
+      --text-tertiary: #636366;
+      --accent: #0a84ff;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    #claude-content {
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>AI Dashboard Design - Metrics &amp; Formulas</h1>
+  </div>
+  <div id="claude-content">
+    <h2>Metrics, Formulas &amp; Sources</h2>
+    <p class="subtitle">Complete breakdown of every metric, how it's calculated, and where the data comes from</p>
+
+    <!-- PILLAR 1 -->
+    <div class="section">
+      <h3 style="color: #3b82f6; border-bottom: 1px solid #2a3a4a; padding-bottom: 8px;">Pillar 1: Delivery Speed &amp;
+        Reliability</h3>
+      <div style="display: grid; gap: 12px; margin-top: 12px;">
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Cycle Time (per issue)</strong>
+            <span class="label" style="color: #3b82f6;">Jira + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Cycle Time = PR Merged Timestamp &#8722; Issue "In Progress" Timestamp</code>
+            <br><br>Broken into sub-stages:
+            <ul style="margin: 8px 0 0 0; padding-left: 20px; line-height: 2;">
+              <li><strong style="color: #e2e8f0;">Coding Time</strong> = <code
+                  style="color: #fbbf24; background: #1e293b; padding: 1px 4px; border-radius: 3px;">First PR Created &#8722; Issue moved to "In Progress"</code>
+                <span style="color: #64748b;">| Jira transitions + GitHub PR</span>
+              </li>
+              <li><strong style="color: #e2e8f0;">Review Time</strong> = <code
+                  style="color: #fbbf24; background: #1e293b; padding: 1px 4px; border-radius: 3px;">PR Approved Timestamp &#8722; First Review Requested Timestamp</code>
+                <span style="color: #64748b;">| GitHub PR events</span>
+              </li>
+              <li><strong style="color: #e2e8f0;">Waiting Time</strong> = <code
+                  style="color: #fbbf24; background: #1e293b; padding: 1px 4px; border-radius: 3px;">Cycle Time &#8722; Coding Time &#8722; Review Time</code>
+                <span style="color: #64748b;">| Derived (includes queue time, CI, merge delays)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Velocity (per sprint)</strong>
+            <span class="label" style="color: #3b82f6;">Jira</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Velocity = &#931; Story Points of issues completed in sprint</code>
+            <br><br>Trend: compare sprint-over-sprint. Segment by AI-assisted vs non-AI issues.
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Sprint Completion Rate</strong>
+            <span class="label" style="color: #3b82f6;">Jira</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Completion Rate = (Issues Done in Sprint / Issues Committed to Sprint) &#215; 100%</code>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">PR Merge Rate</strong>
+            <span class="label" style="color: #3b82f6;">GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Merge Rate = (PRs Merged / PRs Opened) &#215; 100%</code>
+            <br><br>Per time window. Low rate may signal quality issues or scope churn.
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">PR Throughput</strong>
+            <span class="label" style="color: #3b82f6;">GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Throughput = Count of PRs merged per time window</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILLAR 2 -->
+    <div class="section">
+      <h3 style="color: #8b5cf6; border-bottom: 1px solid #2a3a4a; padding-bottom: 8px;">Pillar 2: Where Time Is Spent
+        &amp; Where Work Gets Stuck</h3>
+      <div style="display: grid; gap: 12px; margin-top: 12px;">
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Time-in-Stage Distribution</strong>
+            <span class="label" style="color: #8b5cf6;">Jira + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">% in Stage = (Avg Time in Stage / Avg Total Cycle Time) &#215; 100%</code>
+            <br><br>Computed at three levels:
+            <ul style="margin: 8px 0 0 0; padding-left: 20px; line-height: 2;">
+              <li><strong style="color: #e2e8f0;">Team</strong> = Average across all issues in time window</li>
+              <li><strong style="color: #e2e8f0;">Developer</strong> = Average across issues assigned to developer</li>
+              <li><strong style="color: #e2e8f0;">Issue</strong> = Actual time per stage for a single issue</li>
+            </ul>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Review Queue Depth</strong>
+            <span class="label" style="color: #8b5cf6;">GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Queue Depth = Count of open PRs with review requested but no review submitted</code>
+            <br><br>Point-in-time snapshot. High depth = bottleneck.
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Review Pickup Time</strong>
+            <span class="label" style="color: #8b5cf6;">GitHub + Webex</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Pickup Time = First Review Comment Timestamp &#8722; Review Requested Timestamp</code>
+            <br><br>Supplemented by Webex:<br>
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Webex Response Time = First Reply in Thread &#8722; Review Request Message Timestamp</code>
+            <br><br><span style="color: #64748b;">Webex response time captures acknowledgment even before formal GitHub
+              review begins.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Rework Rate</strong>
+            <span class="label" style="color: #8b5cf6;">GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Rework Rate = (PRs with "Changes Requested" / Total PRs Reviewed) &#215; 100%</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Review Rounds = Count of review iterations before approval</code>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Blocked Time (Jira)</strong>
+            <span class="label" style="color: #8b5cf6;">Jira</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Blocked Time = Time issue spent in "Blocked" status or with blocker flag</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILLAR 3 -->
+    <div class="section">
+      <h3 style="color: #10b981; border-bottom: 1px solid #2a3a4a; padding-bottom: 8px;">Pillar 3: AI Impact</h3>
+      <div style="display: grid; gap: 12px; margin-top: 12px;">
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Code Contribution</strong>
+            <span class="label" style="color: #10b981;">git-ai</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">AI % per Commit = (AI-attributed lines / Total lines changed) &#215; 100%</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">AI % per PR = &#931; AI lines across commits / &#931; Total lines across commits &#215; 100%</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">AI % Team (period) = &#931; AI lines merged / &#931; Total lines merged &#215; 100%</code>
+            <br><br>Segmentable by: developer, repo, agent (Cursor/Claude/Copilot), model.
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI vs Human: Review Comment Density</strong>
+            <span class="label" style="color: #10b981;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">AI Comment Density = Review comments on AI-attributed lines / AI lines in PR</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Human Comment Density = Review comments on human lines / Human lines in PR</code>
+            <br><br><span style="color: #64748b;">Compared within the same PR. Requires matching GitHub review comment
+              line positions against git-ai attribution ranges.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI vs Human: Revision Rounds</strong>
+            <span class="label" style="color: #10b981;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">AI Revision Rate = Commits that modify AI-attributed lines after review / Total review rounds</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Human Revision Rate = Commits that modify human lines after review / Total review rounds</code>
+            <br><br><span style="color: #64748b;">Measures whether AI code requires more post-review fixes than human
+              code.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI vs Human: Review Turnaround</strong>
+            <span class="label" style="color: #10b981;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Avg Review Time (high-AI PRs) vs Avg Review Time (low-AI PRs)</code>
+            <br><br><span style="color: #64748b;">Threshold-based: PRs with &gt;50% AI code vs &lt;20% AI code. Shows if
+              reviewers treat AI-heavy PRs differently.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Tool &amp; Model Usage</strong>
+            <span class="label" style="color: #10b981;">git-ai</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Usage by Agent = Count of commits per agent (Cursor, Claude Code, Copilot, etc.)</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Usage by Model = Count of commits per model (Sonnet, Opus, GPT-4, etc.)</code>
+            <br><br><span style="color: #64748b;">Track adoption trends and which tools the team gravitates
+              toward.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Productivity Impact</strong>
+            <span class="label" style="color: #10b981;">git-ai + Jira</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Avg Coding Time (AI-assisted issues) vs Avg Coding Time (non-AI issues)</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Avg Cycle Time (AI-assisted issues) vs Avg Cycle Time (non-AI issues)</code>
+            <br><br><span style="color: #64748b;">An issue is "AI-assisted" if any of its linked PRs contain git-ai
+              attributed code. Compare same issue types (bug vs bug, story vs story) for fairness.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILLAR 4 -->
+    <div class="section">
+      <h3 style="color: #ef4444; border-bottom: 1px solid #2a3a4a; padding-bottom: 8px;">Pillar 4: AI Quality &amp;
+        Oversight</h3>
+      <div style="display: grid; gap: 12px; margin-top: 12px;">
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Code Defect Rate</strong>
+            <span class="label" style="color: #ef4444;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Defect Rate = (Bug-fix PRs modifying AI-attributed lines / Total PRs with AI code) &#215; 100%</code>
+            <br><br><span style="color: #64748b;">Tracks whether AI-generated code produces bugs at a higher rate than
+              human code. Bug-fix PRs identified via Jira issue type (Bug) linked to the PR.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Code Revert Rate</strong>
+            <span class="label" style="color: #ef4444;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Revert Rate = (Reverted commits with AI-attributed lines / Total commits with AI code) &#215; 100%</code>
+            <br><br><span style="color: #64748b;">High revert rate suggests AI output is being accepted without
+              sufficient review.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Unmodified AI Code Ratio (Copy-Paste Indicator)</strong>
+            <span class="label" style="color: #ef4444;">git-ai</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Unmodified Ratio = (AI lines unchanged from generation to merge / Total AI lines) &#215; 100%</code>
+            <br><br><span style="color: #64748b;">Compares git-ai checkpoint snapshot against final committed code.
+              <strong style="color: #fbbf24;">Interpretation requires context:</strong> A high ratio may indicate blind
+              acceptance (risky) OR excellent spec/prompt engineering where the AI output was correct first try
+              (healthy). Never flag in isolation — evaluate alongside test coverage, review engagement, and defect
+              history.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Review Depth on AI Code</strong>
+            <span class="label" style="color: #ef4444;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Review Comments per AI Line vs Review Comments per Human Line (within same PR)</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Avg Review Comment Length, trended over time, segmented by AI-heavy (&gt;50%) vs non-AI (&lt;20%) PRs</code>
+            <br><br><span style="color: #64748b;">Declining review depth on AI-heavy PRs is a leading indicator that
+              reviewers are rubber-stamping AI output.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">AI Review Blind Acceptance Rate</strong>
+            <span class="label" style="color: #ef4444;">GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Blind Accept Rate = (AI review threads resolved in &lt;2 min or with no reply / Total AI review threads) &#215; 100%</code>
+            <br><br><span style="color: #64748b;">Tracks whether developers are dismissing automated AI review
+              suggestions (e.g., chatgpt-codex-connector) without reading them.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Prompt-to-Fix Cycle</strong>
+            <span class="label" style="color: #ef4444;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Follow-up Fixes = Count of commits within 24h that modify AI-attributed lines from the same PR</code>
+            <br><br><span style="color: #64748b;">Frequent immediate fixes suggest the original AI output was merged
+              prematurely.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Test Coverage on AI Code</strong>
+            <span class="label" style="color: #ef4444;">git-ai + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Test Ratio (AI PRs) = Test lines added / AI code lines added</code>
+            <br><br><code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Test Ratio (non-AI PRs) = Test lines added / Code lines added</code>
+            <br><br><span style="color: #64748b;">Ensures AI-generated code is tested with the same rigor as
+              human-written code. Test files identified by path heuristic (test/, utest/, itest/).</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Knowledge Concentration Risk</strong>
+            <span class="label" style="color: #ef4444;">git-ai + git blame</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Concentration = % of files in module where &gt;80% of recent changes come from single author + AI</code>
+            <br><br><span style="color: #64748b;">Flags bus-factor risk where one developer + AI is writing most of a
+              module, reducing shared understanding across the team.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEBEX -->
+    <div class="section">
+      <h3 style="color: #f59e0b; border-bottom: 1px solid #2a3a4a; padding-bottom: 8px;">Webex Communication Metrics
+      </h3>
+      <div style="display: grid; gap: 12px; margin-top: 12px;">
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Review Request Response Time</strong>
+            <span class="label" style="color: #f59e0b;">Webex</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Response Time = First Thread Reply Timestamp &#8722; Original Message Timestamp</code>
+            <br><br><span style="color: #64748b;">Tracked in the team's dedicated review Webex space. Measures how
+              quickly the team acknowledges review requests in their communication channel.</span>
+          </div>
+        </div>
+        <div style="background: #1a2332; border: 1px solid #2a3a4a; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="color: #e2e8f0;">Communication-to-Action Gap</strong>
+            <span class="label" style="color: #f59e0b;">Webex + GitHub</span>
+          </div>
+          <div style="color: #94a3b8; margin-top: 8px; font-size: 13px;">
+            <code
+              style="color: #fbbf24; background: #1e293b; padding: 2px 6px; border-radius: 4px;">Gap = First GitHub Review Activity &#8722; First Webex Thread Reply on same PR</code>
+            <br><br><span style="color: #64748b;">Measures lag between "I'll look at it" (Webex ack) and actually
+              reviewing (GitHub activity). Large gap = context switching or deprioritization.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
