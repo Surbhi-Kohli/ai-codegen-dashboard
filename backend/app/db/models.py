@@ -127,6 +127,7 @@ class PullRequest(Base):
     base_branch: Mapped[str] = mapped_column(String(500))
     additions: Mapped[int | None] = mapped_column(Integer)
     deletions: Mapped[int | None] = mapped_column(Integer)
+    review_comments_count: Mapped[int | None] = mapped_column(Integer, default=0)
     ai_lines_added: Mapped[int | None] = mapped_column(Integer, default=0)
     ai_lines_removed: Mapped[int | None] = mapped_column(Integer, default=0)
     ai_percentage: Mapped[float | None] = mapped_column(Float, default=0.0)
@@ -161,6 +162,16 @@ class Commit(Base):
     additions: Mapped[int | None] = mapped_column(Integer)
     deletions: Mapped[int | None] = mapped_column(Integer)
 
+    # git-ai stats fields (from `git ai stats <sha> --json`)
+    human_additions: Mapped[int | None] = mapped_column(Integer)
+    ai_additions: Mapped[int | None] = mapped_column(Integer)
+    mixed_additions: Mapped[int | None] = mapped_column(Integer)
+    ai_accepted: Mapped[int | None] = mapped_column(Integer)
+    total_ai_additions: Mapped[int | None] = mapped_column(Integer)
+    total_ai_deletions: Mapped[int | None] = mapped_column(Integer)
+    time_waiting_for_ai_secs: Mapped[int | None] = mapped_column(Integer)
+    tool_model_breakdown: Mapped[str | None] = mapped_column(Text)
+
     pull_request_id: Mapped[int | None] = mapped_column(ForeignKey("pull_requests.id"))
 
     pull_request: Mapped["PullRequest | None"] = relationship(back_populates="commits")
@@ -175,10 +186,14 @@ class AIAttribution(Base):
     file_path: Mapped[str] = mapped_column(String(1000))
     ai_lines_start: Mapped[int] = mapped_column(Integer)
     ai_lines_end: Mapped[int] = mapped_column(Integer)
-    agent: Mapped[str] = mapped_column(String(100))  # copilot, codex, claude, etc.
-    model: Mapped[str | None] = mapped_column(String(100))  # gpt-4, sonnet-3.5, etc.
-    confidence: Mapped[float | None] = mapped_column(Float)
-    raw_note: Mapped[str | None] = mapped_column(Text)  # original git-ai note content
+    agent: Mapped[str] = mapped_column(String(100))
+    model: Mapped[str | None] = mapped_column(String(100))
+    prompt_id: Mapped[str | None] = mapped_column(String(255))
+    human_author: Mapped[str | None] = mapped_column(String(255))
+    accepted_lines: Mapped[int | None] = mapped_column(Integer)
+    overridden_lines: Mapped[int | None] = mapped_column(Integer)
+    messages_url: Mapped[str | None] = mapped_column(String(1000))
+    raw_note: Mapped[str | None] = mapped_column(Text)
 
     commit: Mapped["Commit"] = relationship(back_populates="ai_attributions")
 
@@ -236,6 +251,9 @@ class IssueCycleMetrics(Base):
     is_ai_assisted: Mapped[bool] = mapped_column(Boolean, default=False)
     ai_percentage: Mapped[float | None] = mapped_column(Float)
     review_rounds: Mapped[int | None] = mapped_column(Integer)
+    ai_accepted_ratio: Mapped[float | None] = mapped_column(Float)
+    total_time_waiting_for_ai_secs: Mapped[int | None] = mapped_column(Integer)
+    primary_tool: Mapped[str | None] = mapped_column(String(100))
     ai_comment_density: Mapped[float | None] = mapped_column(Float)
     human_comment_density: Mapped[float | None] = mapped_column(Float)
     webex_response_time_hours: Mapped[float | None] = mapped_column(Float)
@@ -257,6 +275,7 @@ class AIQualityMetrics(Base):
     followup_fixes_24h: Mapped[int | None] = mapped_column(Integer)
     test_lines_added: Mapped[int | None] = mapped_column(Integer)
     has_tests_for_ai_code: Mapped[bool | None] = mapped_column(Boolean)
+    total_time_waiting_for_ai_secs: Mapped[int | None] = mapped_column(Integer)
     reverted_within_7d: Mapped[bool | None] = mapped_column(Boolean)
     defect_linked: Mapped[bool | None] = mapped_column(Boolean)
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

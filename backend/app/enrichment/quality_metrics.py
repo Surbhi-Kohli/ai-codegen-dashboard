@@ -54,15 +54,20 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
     if not attributions:
         return None  # No AI code in this PR — skip
 
-    # ── Unmodified AI ratio ──────────────────────────────────────────
-    # Note: Full implementation requires comparing git-ai checkpoint snapshot
-    # against final committed code. For now, we track the raw counts from
-    # AI attributions and compute when snapshot data is available.
-    total_ai_lines = sum(a.ai_lines_end - a.ai_lines_start + 1 for a in attributions)
-    # Placeholder: will be populated when git-ai provides diff snapshots
-    ai_lines_unchanged = None
-    ai_lines_modified = None
-    unmodified_ai_ratio = None
+    # ── Unmodified AI ratio (from git-ai stats) ────────────────────
+    # ai_accepted = lines AI wrote that were committed as-is
+    # mixed_additions = lines AI wrote that the human then edited
+    total_ai_accepted = sum(c.ai_accepted or 0 for c in commits)
+    total_mixed = sum(c.mixed_additions or 0 for c in commits)
+    total_ai_code = total_ai_accepted + total_mixed
+    ai_lines_unchanged = total_ai_accepted
+    ai_lines_modified = total_mixed
+    unmodified_ai_ratio = (
+        round(total_ai_accepted / total_ai_code * 100, 1) if total_ai_code > 0 else None
+    )
+
+    # Total time waiting for AI across all commits in this PR
+    total_wait_secs = sum(c.time_waiting_for_ai_secs or 0 for c in commits)
 
     # ── AI review blind acceptance ───────────────────────────────────
     comments_result = await db.execute(
@@ -176,6 +181,7 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
     metrics.followup_fixes_24h = followup_fixes_24h
     metrics.test_lines_added = test_lines_added
     metrics.has_tests_for_ai_code = has_tests_for_ai_code
+    metrics.total_time_waiting_for_ai_secs = total_wait_secs if total_wait_secs > 0 else None
     metrics.reverted_within_7d = reverted_within_7d
     metrics.defect_linked = defect_linked
     metrics.computed_at = datetime.now(timezone.utc)
