@@ -5,7 +5,9 @@ For each issue, computes coding time, review time, waiting time, total cycle tim
 AI assistance flags, review rounds, and comment densities. Recomputes on any
 relevant event (transition, PR merge, review).
 """
+import json
 import logging
+from collections import Counter
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
@@ -138,6 +140,36 @@ async def compute_for_issue(db: AsyncSession, issue_id: int) -> IssueCycleMetric
     ai_comment_density = (ai_comment_count / total_lines * 1000) if total_lines > 0 else None
     human_comment_density = (human_comment_count / total_lines * 1000) if total_lines > 0 else None
 
+    # git-ai stats aggregation across all commits in linked PRs
+    all_commits = []
+    for pr in prs:
+        commits_result = await db.execute(
+            select(Commit).where(Commit.pull_request_id == pr.id)
+        )
+        all_commits.extend(commits_result.scalars().all())
+
+    total_ai_accepted = sum(c.ai_accepted or 0 for c in all_commits)
+    total_mixed = sum(c.mixed_additions or 0 for c in all_commits)
+    total_ai_code = total_ai_accepted + total_mixed
+    ai_accepted_ratio = (
+        round(total_ai_accepted / total_ai_code * 100, 1) if total_ai_code > 0 else None
+    )
+
+    total_time_waiting = sum(c.time_waiting_for_ai_secs or 0 for c in all_commits)
+    total_time_waiting_for_ai_secs = total_time_waiting if total_time_waiting > 0 else None
+
+    tool_counts: Counter[str] = Counter()
+    for c in all_commits:
+        if c.tool_model_breakdown:
+            try:
+                breakdown = json.loads(c.tool_model_breakdown)
+                for entry in breakdown:
+                    tool = entry.get("tool", "unknown")
+                    tool_counts[tool] += entry.get("additions", 0)
+            except (json.JSONDecodeError, TypeError):
+                pass
+    primary_tool = tool_counts.most_common(1)[0][0] if tool_counts else None
+
     # Upsert IssueCycleMetrics
     result = await db.execute(
         select(IssueCycleMetrics).where(IssueCycleMetrics.issue_id == issue_id)
@@ -155,6 +187,9 @@ async def compute_for_issue(db: AsyncSession, issue_id: int) -> IssueCycleMetric
     metrics.is_ai_assisted = is_ai_assisted
     metrics.ai_percentage = ai_percentage
     metrics.review_rounds = review_rounds
+    metrics.ai_accepted_ratio = ai_accepted_ratio
+    metrics.total_time_waiting_for_ai_secs = total_time_waiting_for_ai_secs
+    metrics.primary_tool = primary_tool
     metrics.ai_comment_density = ai_comment_density
     metrics.human_comment_density = human_comment_density
     metrics.computed_at = datetime.now(timezone.utc)

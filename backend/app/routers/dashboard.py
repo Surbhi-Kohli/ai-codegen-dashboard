@@ -4,6 +4,7 @@ B11: Dashboard Read Endpoints
 REST API serving pre-computed data for all 5 dashboard views.
 Supports filters: date range, repo, developer.
 """
+import json
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, Query
@@ -169,10 +170,17 @@ async def bottlenecks(
             "waiting_pct": round((row[2] or 0) / total * 100, 1),
         }
 
+    # Time waiting for AI (from git-ai stats on commits)
+    q = select(func.avg(IssueCycleMetrics.total_time_waiting_for_ai_secs)).where(
+        IssueCycleMetrics.total_time_waiting_for_ai_secs.isnot(None)
+    )
+    avg_ai_wait_secs = (await db.execute(q)).scalar()
+
     return {
         "review_queue_depth": review_queue,
         "avg_review_rounds": round(avg_review_rounds, 1) if avg_review_rounds else None,
         "stage_distribution": stage_distribution,
+        "avg_time_waiting_for_ai_secs": round(avg_ai_wait_secs, 0) if avg_ai_wait_secs else None,
     }
 
 
@@ -211,6 +219,41 @@ async def ai_impact(
     avg_ai_cycle = (await db.execute(q_ai)).scalar()
     avg_non_ai_cycle = (await db.execute(q_non_ai)).scalar()
 
+    # AI Accepted Ratio (from git-ai stats on commits)
+    q = select(
+        func.sum(Commit.ai_accepted),
+        func.sum(Commit.mixed_additions),
+    ).where(Commit.ai_accepted.isnot(None))
+    row = (await db.execute(q)).one_or_none()
+    total_accepted = (row[0] or 0) if row else 0
+    total_mixed = (row[1] or 0) if row else 0
+    total_ai_code = total_accepted + total_mixed
+    ai_accepted_ratio = round(total_accepted / total_ai_code * 100, 1) if total_ai_code > 0 else None
+
+    # Time waiting for AI aggregated
+    q = select(func.avg(Commit.time_waiting_for_ai_secs)).where(
+        Commit.time_waiting_for_ai_secs.isnot(None),
+        Commit.time_waiting_for_ai_secs > 0,
+    )
+    avg_wait_secs = (await db.execute(q)).scalar()
+
+    # Tool/model breakdown aggregated from all commits
+    q = select(Commit.tool_model_breakdown).where(Commit.tool_model_breakdown.isnot(None))
+    breakdown_rows = (await db.execute(q)).scalars().all()
+    tool_model_totals: dict[str, dict] = {}
+    for raw in breakdown_rows:
+        try:
+            entries = json.loads(raw)
+            for entry in entries:
+                key = f"{entry.get('tool', 'unknown')}/{entry.get('model', 'unknown')}"
+                if key not in tool_model_totals:
+                    tool_model_totals[key] = {"tool": entry.get("tool"), "model": entry.get("model"), "additions": 0, "accepted": 0}
+                tool_model_totals[key]["additions"] += entry.get("additions", 0)
+                tool_model_totals[key]["accepted"] += entry.get("accepted", 0)
+        except (json.JSONDecodeError, TypeError):
+            continue
+    tool_model_stats = sorted(tool_model_totals.values(), key=lambda x: x["additions"], reverse=True)
+
     return {
         "avg_ai_code_pct": round(avg_ai_pct, 1) if avg_ai_pct else None,
         "top_agents": top_agents,
@@ -218,6 +261,13 @@ async def ai_impact(
             "ai_assisted_avg_hours": round(avg_ai_cycle, 1) if avg_ai_cycle else None,
             "non_ai_avg_hours": round(avg_non_ai_cycle, 1) if avg_non_ai_cycle else None,
         },
+        "ai_accepted_ratio": ai_accepted_ratio,
+        "ai_accepted_vs_edited": {
+            "accepted": total_accepted,
+            "human_edited": total_mixed,
+        },
+        "avg_time_waiting_for_ai_secs": round(avg_wait_secs, 0) if avg_wait_secs else None,
+        "tool_model_breakdown": tool_model_stats,
     }
 
 
@@ -368,6 +418,9 @@ async def issue_detail(
             "total_cycle_time_hours": metrics.total_cycle_time_hours,
             "is_ai_assisted": metrics.is_ai_assisted,
             "ai_percentage": metrics.ai_percentage,
+            "ai_accepted_ratio": metrics.ai_accepted_ratio,
+            "total_time_waiting_for_ai_secs": metrics.total_time_waiting_for_ai_secs,
+            "primary_tool": metrics.primary_tool,
             "review_rounds": metrics.review_rounds,
         }
 

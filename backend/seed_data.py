@@ -3,6 +3,7 @@ Seed script: Inserts real Jira + GitHub data into the SQLite database.
 Run with: python seed_data.py
 """
 import asyncio
+import json
 import random
 from datetime import datetime, timedelta, timezone
 
@@ -500,51 +501,81 @@ async def seed():
         # 6. Insert sample commits + AI attributions for merged PRs
         commit_count = 0
         attr_count = 0
-        agents = ["copilot", "codex", "claude", "copilot", "copilot"]
-        models = ["gpt-4", "gpt-4", "sonnet-3.5", "gpt-4o", "gpt-4"]
+        tool_models = [
+            ("cursor", "claude-sonnet-4-20250514"),
+            ("copilot", "gpt-4o"),
+            ("cursor", "claude-sonnet-4-20250514"),
+            ("copilot", "gpt-4"),
+            ("claude-code", "claude-sonnet-4-20250514"),
+        ]
+        sample_files = [
+            "adminserv/handlers/auth.py",
+            "lib-python/duo/auth/session.py",
+            "endpointhealthserv/health_check.py",
+            "cloudsso/services/session_trust.py",
+            "adminserv/webpack.config.ts",
+            "test/js/admin/auth.test.ts",
+        ]
 
         for pr in pr_map.values():
             if not pr.merged_at:
                 continue
-            # Create 1-3 commits per merged PR
             num_commits = random.randint(1, 3)
             for i in range(num_commits):
                 sha = f"{pr.number:05d}{i:02d}" + "a" * 33
+                additions = random.randint(10, 200)
+                has_ai = pr.ai_percentage and pr.ai_percentage > 10
+
+                ai_adds = random.randint(20, additions) if has_ai else 0
+                human_adds = additions - ai_adds
+                mixed = random.randint(0, ai_adds // 3) if ai_adds > 3 else 0
+                accepted = ai_adds - mixed
+                wait_secs = random.randint(5, 90) if has_ai else 0
+
+                tool_idx = random.randint(0, len(tool_models) - 1)
+                tool, model = tool_models[tool_idx]
+                breakdown = [{"tool": tool, "model": model, "additions": ai_adds, "accepted": accepted}] if has_ai else []
+
                 c = Commit(
                     sha=sha,
                     message=f"commit {i+1} for {pr.title}",
                     author=pr.author,
                     committed_at=pr.opened_at + timedelta(hours=random.randint(1, 48)),
-                    additions=random.randint(10, 200),
+                    additions=additions,
                     deletions=random.randint(0, 50),
+                    human_additions=human_adds,
+                    ai_additions=ai_adds,
+                    mixed_additions=mixed,
+                    ai_accepted=accepted,
+                    total_ai_additions=ai_adds,
+                    total_ai_deletions=random.randint(0, 5) if has_ai else 0,
+                    time_waiting_for_ai_secs=wait_secs,
+                    tool_model_breakdown=json.dumps(breakdown) if breakdown else None,
                     pull_request_id=pr.id,
                 )
                 db.add(c)
                 await db.flush()
                 commit_count += 1
 
-                # Add AI attributions if PR has AI code
-                if pr.ai_percentage and pr.ai_percentage > 10:
+                if has_ai:
                     num_attrs = random.randint(1, 4)
+                    prompt_id = f"prompt-{pr.number}-{i}-{random.randint(1000, 9999)}"
                     for j in range(num_attrs):
                         start_line = random.randint(1, 100)
                         end_line = start_line + random.randint(5, 40)
-                        agent_idx = random.randint(0, len(agents) - 1)
+                        line_count = end_line - start_line + 1
+                        accepted_l = random.randint(int(line_count * 0.6), line_count)
                         attr = AIAttribution(
                             commit_id=c.id,
-                            file_path=random.choice([
-                                "adminserv/handlers/auth.py",
-                                "lib-python/duo/auth/session.py",
-                                "endpointhealthserv/health_check.py",
-                                "cloudsso/services/session_trust.py",
-                                "adminserv/webpack.config.ts",
-                                "test/js/admin/auth.test.ts",
-                            ]),
+                            file_path=random.choice(sample_files),
                             ai_lines_start=start_line,
                             ai_lines_end=end_line,
-                            agent=agents[agent_idx],
-                            model=models[agent_idx],
-                            confidence=round(random.uniform(0.7, 0.99), 2),
+                            agent=tool,
+                            model=model,
+                            prompt_id=prompt_id,
+                            human_author=pr.author,
+                            accepted_lines=accepted_l,
+                            overridden_lines=line_count - accepted_l,
                         )
                         db.add(attr)
                         attr_count += 1
@@ -591,11 +622,16 @@ async def seed():
         await db.commit()
         print("\n✅ Seed complete!")
 
-    # 8. Run enrichment: compute cycle metrics
+    # 8. Run enrichment pipeline
     print("\nRunning enrichment...")
     async with async_session() as db:
+        from app.enrichment.ai_code_correlator import correlate_all_untagged
         from app.enrichment.cycle_metrics import recompute_all as recompute_cycle
         from app.enrichment.quality_metrics import recompute_all as recompute_quality
+
+        tagged = await correlate_all_untagged(db)
+        await db.commit()
+        print(f"  Tagged {tagged} review comments (AI code correlation)")
 
         cycle_count = await recompute_cycle(db)
         await db.commit()
