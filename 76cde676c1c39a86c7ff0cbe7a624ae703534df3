@@ -1,0 +1,25 @@
+frontend/src/__tests__/KpiCard.test.tsx
+  2974e4737c668702 1-16
+frontend/src/components/KpiCard.tsx
+  2974e4737c668702 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "76cde676c1c39a86c7ff0cbe7a624ae703534df3",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 524,
+      "total_deletions": 0,
+      "accepted_lines": 2562,
+      "overriden_lines": 0
+    }
+  }
+}
