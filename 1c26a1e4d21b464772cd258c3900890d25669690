@@ -1,0 +1,45 @@
+frontend/vite.config.ts
+  2974e4737c668702 1-18
+frontend/postcss.config.js
+  2974e4737c668702 1-6
+frontend/src/App.tsx
+  2974e4737c668702 1-10
+frontend/tsconfig.node.json
+  2974e4737c668702 1-15
+frontend/package.json
+  2974e4737c668702 1-33
+frontend/src/main.tsx
+  2974e4737c668702 1-13
+.gitignore
+  2974e4737c668702 34-35
+frontend/tailwind.config.js
+  2974e4737c668702 1-16
+frontend/src/index.css
+  2974e4737c668702 1-7
+frontend/tsconfig.app.json
+  2974e4737c668702 1-20
+frontend/index.html
+  2974e4737c668702 1-12
+frontend/tsconfig.json
+  2974e4737c668702 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "1c26a1e4d21b464772cd258c3900890d25669690",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 2244,
+      "total_deletions": 47,
+      "accepted_lines": 2197,
+      "overriden_lines": 0
+    }
+  }
+}
