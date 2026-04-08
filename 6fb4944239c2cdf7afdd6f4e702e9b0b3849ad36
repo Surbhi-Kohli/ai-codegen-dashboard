@@ -1,0 +1,44 @@
+backend/insert_biz_systems_webex.py
+  cbafd15614fcabb5 1-167
+backend/app/main.py
+  cbafd15614fcabb5 1-2,5-6,12,14-57,62,67-70,73-81,93-100,110-189
+backend/app/routers/dashboard.py
+  cbafd15614fcabb5 10,25,29-31,444-790
+backend/app/routers/github_webhooks.py
+  cbafd15614fcabb5 59-62,66-82
+backend/backfill_from_jira.py
+  cbafd15614fcabb5 1-143
+backend/insert_webex_sample.py
+  cbafd15614fcabb5 1-161
+backend/app/config.py
+  cbafd15614fcabb5 15
+backend/seed_sprints.py
+  cbafd15614fcabb5 1-73
+backend/app/ingestion/github_poller.py
+  cbafd15614fcabb5 1-295
+backend/app/enrichment/cycle_metrics.py
+  cbafd15614fcabb5 24,174-202,225
+backend/backfill_webex.py
+  cbafd15614fcabb5 1-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6fb4944239c2cdf7afdd6f4e702e9b0b3849ad36",
+  "prompts": {
+    "cbafd15614fcabb5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f9c2553-e274-4a9b-9692-4dd5363831ba",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Divy",
+      "messages": [],
+      "total_additions": 2116,
+      "total_deletions": 37,
+      "accepted_lines": 2088,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/6a6ce1528b81f16bb201312607e147fd8ce9a334654d74927f7675ec660a1965"
+    }
+  }
+}
