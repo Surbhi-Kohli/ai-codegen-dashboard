@@ -7,7 +7,7 @@ Supports filters: date range, repo, developer.
 import json
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,8 +22,12 @@ from app.db.models import (
     Repository,
     ReviewComment,
     Sprint,
+    WebexMessage,
 )
 from app.db.session import get_db
+
+# Status values that indicate "done"
+DONE_STATUSES = {"done", "closed", "resolved", "complete", "completed"}
 
 router = APIRouter()
 
@@ -436,4 +440,351 @@ async def issue_detail(
         "transitions": transitions,
         "pull_requests": prs,
         "cycle_metrics": metrics_data,
+    }
+
+
+# ── Enrichment triggers ──────────────────────────────────────────
+
+
+@router.post("/recompute-metrics")
+async def recompute_metrics(
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    """Trigger recomputation of all cycle metrics."""
+    from app.enrichment.cycle_metrics import recompute_all
+
+    async def run_recompute():
+        async with db.begin():
+            count = await recompute_all(db)
+            return count
+
+    background_tasks.add_task(run_recompute)
+    return {"status": "started", "message": "Cycle metrics recomputation started"}
+
+
+# ── View 6: Webex Response Times ─────────────────────────────────────
+
+
+@router.get("/webex-response")
+async def webex_response(
+    db: AsyncSession = Depends(get_db),
+):
+    """Webex communication metrics - response times and PR acknowledgment."""
+    # Total messages tracked
+    total_messages = (await db.execute(
+        select(func.count(WebexMessage.id))
+    )).scalar() or 0
+
+    # Messages linked to PRs
+    linked_to_prs = (await db.execute(
+        select(func.count(WebexMessage.id)).where(
+            WebexMessage.pull_request_id.isnot(None)
+        )
+    )).scalar() or 0
+
+    # PR review request messages (messages with PR links that have thread replies)
+    # A "review request" is a root message (no parent) that contains a PR URL
+    review_requests = (await db.execute(
+        select(func.count(WebexMessage.id)).where(
+            WebexMessage.pull_request_id.isnot(None),
+            WebexMessage.parent_message_id.is_(None),
+        )
+    )).scalar() or 0
+
+    # Thread replies (messages with parent_message_id set)
+    thread_replies = (await db.execute(
+        select(func.count(WebexMessage.id)).where(
+            WebexMessage.parent_message_id.isnot(None)
+        )
+    )).scalar() or 0
+
+    # Calculate average response time for PR-related threads
+    # Find review request messages and their first replies
+    from sqlalchemy.orm import aliased
+
+    ParentMsg = aliased(WebexMessage)
+    ReplyMsg = aliased(WebexMessage)
+
+    # Get pairs of (parent PR message, first reply)
+    subq = (
+        select(
+            ParentMsg.id.label("parent_id"),
+            func.min(ReplyMsg.created_at).label("first_reply_at"),
+        )
+        .join(ReplyMsg, ReplyMsg.parent_message_id == ParentMsg.webex_message_id)
+        .where(
+            ParentMsg.pull_request_id.isnot(None),
+            ParentMsg.parent_message_id.is_(None),
+        )
+        .group_by(ParentMsg.id)
+        .subquery()
+    )
+
+    # Calculate response times
+    response_times_result = await db.execute(
+        select(
+            ParentMsg.id,
+            ParentMsg.created_at,
+            subq.c.first_reply_at,
+        )
+        .join(subq, subq.c.parent_id == ParentMsg.id)
+    )
+
+    response_times = []
+    for row in response_times_result.all():
+        if row[1] and row[2]:
+            delta_hours = (row[2] - row[1]).total_seconds() / 3600
+            response_times.append(delta_hours)
+
+    avg_response_hours = None
+    if response_times:
+        avg_response_hours = round(sum(response_times) / len(response_times), 2)
+
+    # Recent review requests (root messages) with response status
+    # Show all root messages, not just PR-linked ones
+    recent_result = await db.execute(
+        select(WebexMessage)
+        .where(
+            WebexMessage.parent_message_id.is_(None),
+        )
+        .order_by(WebexMessage.created_at.desc())
+        .limit(20)
+    )
+
+    recent_reviews = []
+    for msg in recent_result.scalars().all():
+        # Check if this message has any replies
+        reply_count = (await db.execute(
+            select(func.count(WebexMessage.id)).where(
+                WebexMessage.parent_message_id == msg.webex_message_id
+            )
+        )).scalar() or 0
+
+        # Get first reply timestamp if exists
+        first_reply = (await db.execute(
+            select(WebexMessage.created_at)
+            .where(WebexMessage.parent_message_id == msg.webex_message_id)
+            .order_by(WebexMessage.created_at.asc())
+            .limit(1)
+        )).scalar_one_or_none()
+
+        response_time_hours = None
+        if first_reply:
+            response_time_hours = round((first_reply - msg.created_at).total_seconds() / 3600, 2)
+
+        # Extract PR info from text if available
+        import re
+        pr_match = re.search(r"github\.com/[^/]+/[^/]+/pull/(\d+)", msg.text or "")
+        pr_number = int(pr_match.group(1)) if pr_match else None
+
+        # Extract author from "by [Author]" pattern
+        author_match = re.search(r"by \[?([^\]]+)\]?(?:\s+is ready|\s*$)", msg.text or "")
+        pr_author = author_match.group(1) if author_match else msg.person_id
+
+        recent_reviews.append({
+            "pr_number": pr_number,
+            "message_preview": (msg.text or "")[:100] + "..." if msg.text and len(msg.text) > 100 else msg.text,
+            "author": pr_author,
+            "posted_at": msg.created_at.isoformat(),
+            "reply_count": reply_count,
+            "response_time_hours": response_time_hours,
+            "acknowledged": reply_count > 0,
+        })
+
+    return {
+        "summary": {
+            "total_messages": total_messages,
+            "linked_to_prs": linked_to_prs,
+            "review_requests": review_requests,
+            "thread_replies": thread_replies,
+            "avg_response_time_hours": avg_response_hours,
+        },
+        "recent_reviews": recent_reviews,
+    }
+
+
+# ── Sprint-Level Metrics ─────────────────────────────────────────────
+
+
+@router.get("/sprints")
+async def sprint_metrics(
+    db: AsyncSession = Depends(get_db),
+):
+    """Sprint-level metrics: velocity, completion rate, AI impact comparison."""
+    # Get all sprints with their issues
+    sprints_result = await db.execute(
+        select(Sprint).order_by(Sprint.start_date.desc()).limit(10)
+    )
+    sprints = sprints_result.scalars().all()
+
+    sprint_data = []
+    for sprint in sprints:
+        # Get issues in this sprint
+        issues_result = await db.execute(
+            select(Issue).where(Issue.sprint_id == sprint.id)
+        )
+        issues = issues_result.scalars().all()
+
+        total_issues = len(issues)
+        done_issues = sum(1 for i in issues if i.status.lower() in DONE_STATUSES)
+
+        # Velocity: sum of story points for done issues
+        velocity = sum(i.story_points or 0 for i in issues if i.status.lower() in DONE_STATUSES)
+        committed_points = sum(i.story_points or 0 for i in issues)
+
+        # Completion rate
+        completion_rate = round(done_issues / total_issues * 100, 1) if total_issues > 0 else 0
+
+        # AI vs Non-AI velocity breakdown
+        ai_velocity = 0
+        non_ai_velocity = 0
+
+        for issue in issues:
+            if issue.status.lower() not in DONE_STATUSES:
+                continue
+            points = issue.story_points or 0
+
+            # Check if AI-assisted via cycle metrics
+            metrics_result = await db.execute(
+                select(IssueCycleMetrics).where(IssueCycleMetrics.issue_id == issue.id)
+            )
+            metrics = metrics_result.scalar_one_or_none()
+
+            if metrics and metrics.is_ai_assisted:
+                ai_velocity += points
+            else:
+                non_ai_velocity += points
+
+        sprint_data.append({
+            "sprint_id": sprint.jira_sprint_id,
+            "name": sprint.name,
+            "state": sprint.state,
+            "start_date": sprint.start_date.isoformat() if sprint.start_date else None,
+            "end_date": sprint.end_date.isoformat() if sprint.end_date else None,
+            "total_issues": total_issues,
+            "done_issues": done_issues,
+            "completion_rate": completion_rate,
+            "velocity": velocity,
+            "committed_points": committed_points,
+            "ai_velocity": ai_velocity,
+            "non_ai_velocity": non_ai_velocity,
+            "ai_velocity_pct": round(ai_velocity / velocity * 100, 1) if velocity > 0 else 0,
+        })
+
+    # Aggregated stats across recent sprints
+    total_velocity = sum(s["velocity"] for s in sprint_data)
+    total_ai_velocity = sum(s["ai_velocity"] for s in sprint_data)
+    avg_completion = sum(s["completion_rate"] for s in sprint_data) / len(sprint_data) if sprint_data else 0
+
+    return {
+        "summary": {
+            "sprints_analyzed": len(sprint_data),
+            "total_velocity": total_velocity,
+            "avg_completion_rate": round(avg_completion, 1),
+            "ai_velocity_total": total_ai_velocity,
+            "ai_velocity_pct": round(total_ai_velocity / total_velocity * 100, 1) if total_velocity > 0 else 0,
+        },
+        "sprints": sprint_data,
+    }
+
+
+@router.get("/team-metrics")
+async def team_metrics(
+    db: AsyncSession = Depends(get_db),
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
+):
+    """Aggregated team-level metrics with AI impact analysis."""
+    date_conds = _date_filter(Issue.created_at, start_date, end_date)
+
+    # Review pickup time: avg time from PR opened to first review
+    pr_date_conds = _date_filter(PullRequest.opened_at, start_date, end_date)
+    q = select(PullRequest).where(
+        PullRequest.first_review_at.isnot(None),
+        PullRequest.opened_at.isnot(None),
+    )
+    if pr_date_conds:
+        q = q.where(and_(*pr_date_conds))
+    prs_result = await db.execute(q)
+    prs = prs_result.scalars().all()
+
+    pickup_times = []
+    for pr in prs:
+        delta = (pr.first_review_at - pr.opened_at).total_seconds() / 3600
+        pickup_times.append(delta)
+    avg_pickup_time = round(sum(pickup_times) / len(pickup_times), 2) if pickup_times else None
+
+    # Rework rate: PRs with changes_requested / total reviewed PRs
+    total_reviewed = len(prs)
+    prs_with_changes = 0
+    for pr in prs:
+        comments_result = await db.execute(
+            select(func.count(ReviewComment.id)).where(
+                ReviewComment.pull_request_id == pr.id,
+                ReviewComment.state == "changes_requested",
+            )
+        )
+        if (comments_result.scalar() or 0) > 0:
+            prs_with_changes += 1
+    rework_rate = round(prs_with_changes / total_reviewed * 100, 1) if total_reviewed > 0 else 0
+
+    # AI vs non-AI cycle time comparison
+    ai_cycle_result = await db.execute(
+        select(func.avg(IssueCycleMetrics.total_cycle_time_hours)).where(
+            IssueCycleMetrics.is_ai_assisted == True  # noqa: E712
+        )
+    )
+    non_ai_cycle_result = await db.execute(
+        select(func.avg(IssueCycleMetrics.total_cycle_time_hours)).where(
+            IssueCycleMetrics.is_ai_assisted == False  # noqa: E712
+        )
+    )
+    avg_ai_cycle = ai_cycle_result.scalar()
+    avg_non_ai_cycle = non_ai_cycle_result.scalar()
+
+    # AI coding time savings
+    ai_coding_result = await db.execute(
+        select(func.avg(IssueCycleMetrics.coding_time_hours)).where(
+            IssueCycleMetrics.is_ai_assisted == True  # noqa: E712
+        )
+    )
+    non_ai_coding_result = await db.execute(
+        select(func.avg(IssueCycleMetrics.coding_time_hours)).where(
+            IssueCycleMetrics.is_ai_assisted == False  # noqa: E712
+        )
+    )
+    avg_ai_coding = ai_coding_result.scalar()
+    avg_non_ai_coding = non_ai_coding_result.scalar()
+
+    coding_time_saved = None
+    if avg_ai_coding and avg_non_ai_coding:
+        coding_time_saved = round(avg_non_ai_coding - avg_ai_coding, 1)
+
+    # Webex response time average
+    webex_response_result = await db.execute(
+        select(func.avg(IssueCycleMetrics.webex_response_time_hours)).where(
+            IssueCycleMetrics.webex_response_time_hours.isnot(None)
+        )
+    )
+    avg_webex_response = webex_response_result.scalar()
+
+    return {
+        "review_metrics": {
+            "avg_pickup_time_hours": avg_pickup_time,
+            "rework_rate_pct": rework_rate,
+            "total_prs_reviewed": total_reviewed,
+            "prs_needing_changes": prs_with_changes,
+        },
+        "ai_productivity": {
+            "avg_ai_cycle_time_hours": round(avg_ai_cycle, 1) if avg_ai_cycle else None,
+            "avg_non_ai_cycle_time_hours": round(avg_non_ai_cycle, 1) if avg_non_ai_cycle else None,
+            "cycle_time_diff_hours": round(avg_non_ai_cycle - avg_ai_cycle, 1) if avg_ai_cycle and avg_non_ai_cycle else None,
+            "avg_ai_coding_time_hours": round(avg_ai_coding, 1) if avg_ai_coding else None,
+            "avg_non_ai_coding_time_hours": round(avg_non_ai_coding, 1) if avg_non_ai_coding else None,
+            "coding_time_saved_hours": coding_time_saved,
+        },
+        "communication": {
+            "avg_webex_response_time_hours": round(avg_webex_response, 2) if avg_webex_response else None,
+        },
     }

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     jira_base_url: str = "https://cisco-sbg.atlassian.net"
     jira_email: str = ""
     jira_api_token: str = ""
-    jira_project_keys: str = "ZTAEX,ZTCE"
+    jira_project_keys: str = "ZTBSSM,ZTAEX,ZTCE"
     jira_poll_interval_minutes: int = 15
 
     # GitHub
