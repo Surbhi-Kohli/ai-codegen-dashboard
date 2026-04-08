@@ -1,0 +1,23 @@
+frontend/src/pages/AiImpactPage.tsx
+  2974e4737c668702 1-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "48974eaf50f6780dfd56f3c1ea464d9bffd18675",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2279,
+      "overriden_lines": 0
+    }
+  }
+}
