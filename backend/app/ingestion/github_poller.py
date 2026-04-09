@@ -138,6 +138,7 @@ async def _upsert_pull_request(
     )
     pr = result.scalar_one_or_none()
 
+    is_new_pr = pr is None
     if not pr:
         pr = PullRequest(
             github_pr_id=pr_data["id"],
@@ -202,6 +203,14 @@ async def _upsert_pull_request(
         pr.ai_lines_added = total_ai
 
     await db.flush()
+
+    if is_new_pr:
+        try:
+            from app.integrations.webex_notifier import notify_pr
+            result = await notify_pr(db, pr.id)
+            logger.info("Webex notify for PR #%d: %s", pr_number, result.get("status"))
+        except Exception:
+            logger.debug("Webex notification skipped or failed for PR #%d", pr_number, exc_info=True)
 
 
 async def _fetch_pr_detail(full_name: str, pr_number: int) -> dict | None:

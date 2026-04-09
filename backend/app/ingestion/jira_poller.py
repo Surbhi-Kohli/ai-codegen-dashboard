@@ -12,7 +12,6 @@ from app.db.session import async_session
 
 logger = logging.getLogger(__name__)
 
-# Track last poll time per project for incremental sync
 _last_poll: dict[str, str] = {}
 
 
@@ -39,45 +38,69 @@ async def _poll_project(project_key: str) -> None:
 
 
 async def _fetch_issues(project_key: str) -> list[dict]:
-    """Fetch issues from Jira REST API with pagination and incremental sync."""
+    """Fetch issues from Jira REST API v3 (search/jql POST endpoint)."""
     all_issues = []
     start_at = 0
     max_results = 50
 
-    # Incremental: only fetch issues updated since last poll
     jql = f"project = {project_key}"
     last = _last_poll.get(project_key)
     if last:
         jql += f' AND updated >= "{last}"'
     jql += " ORDER BY updated ASC"
 
+    headers = {**_auth_header(), "Content-Type": "application/json"}
+
     async with httpx.AsyncClient(timeout=30) as client:
         while True:
-            resp = await client.get(
-                f"{settings.jira_base_url}/rest/api/3/search",
-                headers=_auth_header(),
-                params={
+            resp = await client.post(
+                f"{settings.jira_base_url}/rest/api/3/search/jql",
+                headers=headers,
+                json={
                     "jql": jql,
                     "startAt": start_at,
                     "maxResults": max_results,
-                    "fields": "summary,issuetype,status,priority,assignee,created,"
-                              "updated,resolutiondate,story_points,sprint",
-                    "expand": "changelog",
+                    "fields": [
+                        "summary", "issuetype", "status", "priority", "assignee",
+                        "created", "updated", "resolutiondate", "sprint",
+                    ],
                 },
             )
             resp.raise_for_status()
             data = resp.json()
 
-            all_issues.extend(data.get("issues", []))
+            issues = data.get("issues", [])
+            all_issues.extend(issues)
 
-            total = data.get("total", 0)
+            total = data.get("total", len(issues))
             start_at += max_results
-            if start_at >= total:
+            if start_at >= total or len(issues) == 0:
                 break
 
-    # Update last poll timestamp
     _last_poll[project_key] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
     return all_issues
+
+
+async def _fetch_changelog(issue_key: str) -> list[dict]:
+    """Fetch changelog for a single issue via the dedicated changelog endpoint."""
+    all_values = []
+    start_at = 0
+    async with httpx.AsyncClient(timeout=30) as client:
+        while True:
+            resp = await client.get(
+                f"{settings.jira_base_url}/rest/api/3/issue/{issue_key}/changelog",
+                headers=_auth_header(),
+                params={"startAt": start_at, "maxResults": 100},
+            )
+            if resp.status_code != 200:
+                break
+            data = resp.json()
+            values = data.get("values", [])
+            all_values.extend(values)
+            if start_at + len(values) >= data.get("total", 0) or len(values) == 0:
+                break
+            start_at += len(values)
+    return all_values
 
 
 async def _upsert_issue(db: AsyncSession, issue_data: dict) -> None:
@@ -107,16 +130,14 @@ async def _upsert_issue(db: AsyncSession, issue_data: dict) -> None:
     issue.updated_at = _parse_jira_datetime(fields.get("updated")) if fields.get("updated") else None
     issue.resolved_at = _parse_jira_datetime(fields.get("resolutiondate")) if fields.get("resolutiondate") else None
 
-    # Sprint linkage
     sprint_data = fields.get("sprint")
     if sprint_data:
         issue.sprint_id = await _upsert_sprint(db, sprint_data)
 
     await db.flush()
 
-    # Process changelog for status transitions
-    changelog = issue_data.get("changelog", {})
-    for history in changelog.get("histories", []):
+    changelog_entries = await _fetch_changelog(jira_key)
+    for history in changelog_entries:
         for item in history.get("items", []):
             if item["field"] == "status":
                 await _upsert_transition(
@@ -163,7 +184,7 @@ async def _upsert_transition(
     transitioned_at: datetime,
     author_account_id: str | None,
 ) -> None:
-    """Insert a transition if it doesn't already exist (dedup by issue + timestamp + to_status)."""
+    """Insert a transition if it doesn't already exist."""
     result = await db.execute(
         select(IssueTransition).where(
             IssueTransition.issue_id == issue_id,
@@ -188,9 +209,7 @@ def _parse_jira_datetime(dt_str: str) -> datetime:
     """Parse Jira datetime strings (ISO 8601 with timezone offset)."""
     if not dt_str:
         return datetime.now(timezone.utc)
-    # Jira format: 2024-01-15T10:30:00.000+0530 or 2024-01-15T10:30:00.000Z
     dt_str = dt_str.replace("Z", "+00:00")
-    # Handle +0530 format (no colon) — convert to +05:30
     if len(dt_str) > 5 and dt_str[-5] in "+-" and ":" not in dt_str[-5:]:
         dt_str = dt_str[:-2] + ":" + dt_str[-2:]
     return datetime.fromisoformat(dt_str)

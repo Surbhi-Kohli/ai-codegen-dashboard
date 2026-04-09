@@ -25,19 +25,7 @@ function buildParams(filters: ApiFilters): URLSearchParams {
   if (filters.end_date) params.set("end_date", filters.end_date);
   if (filters.repo) params.set("repo", filters.repo);
   if (filters.developer) params.set("developer", filters.developer);
-  if (filters.project) params.set("project", filters.project);
   return params;
-}
-
-export async function fetchBoards(): Promise<{ key: string; issue_count: number }[]> {
-  try {
-    const res = await fetch("/api/boards", { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const data = await res.json();
-    return data.boards ?? [];
-  } catch {
-    return [];
-  }
 }
 
 async function fetchJson<T>(url: string, fallback: T): Promise<T> {
@@ -73,4 +61,18 @@ export function fetchAiQuality(filters: ApiFilters): Promise<AiQualityResponse> 
 
 export function fetchIssueDetail(jiraKey: string): Promise<IssueDetailResponse> {
   return fetchJson(`/api/issues/${jiraKey}`, getMockIssueDetail(jiraKey));
+}
+
+export async function fetchPRs(): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/api/prs`, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function sendWebexNotification(prId: number): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/notify-pr/${prId}`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+  });
+  return res.json();
 }
