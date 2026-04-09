@@ -21,6 +21,7 @@ from app.db.models import (
     IssueTransition,
     PullRequest,
     ReviewComment,
+    WebexMessage,
 )
 
 logger = logging.getLogger(__name__)
@@ -170,6 +171,35 @@ async def compute_for_issue(db: AsyncSession, issue_id: int) -> IssueCycleMetric
                 pass
     primary_tool = tool_counts.most_common(1)[0][0] if tool_counts else None
 
+    # Webex response time: avg time from PR review request to first thread reply
+    webex_response_time_hours = None
+    webex_response_times = []
+    for pr in prs:
+        # Get root messages (review requests) linked to this PR
+        root_msgs_result = await db.execute(
+            select(WebexMessage).where(
+                WebexMessage.pull_request_id == pr.id,
+                WebexMessage.parent_message_id.is_(None),
+            )
+        )
+        root_msgs = root_msgs_result.scalars().all()
+
+        for msg in root_msgs:
+            # Find first reply to this message
+            first_reply_result = await db.execute(
+                select(WebexMessage.created_at)
+                .where(WebexMessage.parent_message_id == msg.webex_message_id)
+                .order_by(WebexMessage.created_at.asc())
+                .limit(1)
+            )
+            first_reply_at = first_reply_result.scalar_one_or_none()
+            if first_reply_at:
+                response_hours = _hours_between(msg.created_at, first_reply_at)
+                webex_response_times.append(response_hours)
+
+    if webex_response_times:
+        webex_response_time_hours = sum(webex_response_times) / len(webex_response_times)
+
     # Upsert IssueCycleMetrics
     result = await db.execute(
         select(IssueCycleMetrics).where(IssueCycleMetrics.issue_id == issue_id)
@@ -192,6 +222,7 @@ async def compute_for_issue(db: AsyncSession, issue_id: int) -> IssueCycleMetric
     metrics.primary_tool = primary_tool
     metrics.ai_comment_density = ai_comment_density
     metrics.human_comment_density = human_comment_density
+    metrics.webex_response_time_hours = webex_response_time_hours
     metrics.computed_at = datetime.now(timezone.utc)
 
     await db.flush()
