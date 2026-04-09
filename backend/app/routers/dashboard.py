@@ -45,6 +45,28 @@ def _date_filter(model_col, start: date | None, end: date | None):
     return conditions
 
 
+def _project_filter(project: str | None):
+    """Return a condition that filters issues by jira_key prefix (board)."""
+    if project:
+        return [Issue.jira_key.like(f"{project}-%")]
+    return []
+
+
+# ── Board listing ────────────────────────────────────────────────────
+
+
+@router.get("/boards")
+async def list_boards(db: AsyncSession = Depends(get_db)):
+    """Return distinct Jira project prefixes available in the DB."""
+    result = await db.execute(select(Issue.jira_key))
+    keys = result.scalars().all()
+    boards: dict[str, int] = {}
+    for k in keys:
+        prefix = k.split("-")[0] if "-" in k else k
+        boards[prefix] = boards.get(prefix, 0) + 1
+    return {"boards": [{"key": k, "issue_count": v} for k, v in sorted(boards.items())]}
+
+
 # ── View 1: Overview ─────────────────────────────────────────────────
 
 
@@ -54,38 +76,48 @@ async def overview(
     start_date: date | None = Query(None),
     end_date: date | None = Query(None),
     repo: str | None = Query(None),
+    project: str | None = Query(None),
 ):
     """KPI cards + summary for the overview page."""
     date_conds = _date_filter(Issue.created_at, start_date, end_date)
+    proj_conds = _project_filter(project)
 
     # Total issues
     q = select(func.count(Issue.id))
-    if date_conds:
-        q = q.where(and_(*date_conds))
+    if date_conds or proj_conds:
+        q = q.where(and_(*date_conds, *proj_conds))
     total_issues = (await db.execute(q)).scalar() or 0
 
     # Resolved issues
     resolved_conds = _date_filter(Issue.resolved_at, start_date, end_date)
     q = select(func.count(Issue.id)).where(Issue.resolved_at.isnot(None))
-    if resolved_conds:
-        q = q.where(and_(*resolved_conds))
+    if resolved_conds or proj_conds:
+        q = q.where(and_(*resolved_conds, *proj_conds))
     resolved_issues = (await db.execute(q)).scalar() or 0
 
-    # Average cycle time
+    # Average cycle time (filtered by project via issue join)
     q = select(func.avg(IssueCycleMetrics.total_cycle_time_hours))
+    if proj_conds:
+        q = q.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     avg_cycle_time = (await db.execute(q)).scalar()
 
-    # PRs merged
+    # PRs merged (filtered by project via issue join)
     pr_date_conds = _date_filter(PullRequest.merged_at, start_date, end_date)
     q = select(func.count(PullRequest.id)).where(PullRequest.merged_at.isnot(None))
+    if proj_conds:
+        q = q.join(Issue, Issue.id == PullRequest.issue_id).where(and_(*proj_conds))
     if pr_date_conds:
         q = q.where(and_(*pr_date_conds))
     prs_merged = (await db.execute(q)).scalar() or 0
 
     # AI-assisted %
-    q = select(func.count(IssueCycleMetrics.id)).where(IssueCycleMetrics.is_ai_assisted == True)  # noqa: E712
-    ai_assisted_count = (await db.execute(q)).scalar() or 0
-    total_metrics = (await db.execute(select(func.count(IssueCycleMetrics.id)))).scalar() or 1
+    q_ai = select(func.count(IssueCycleMetrics.id)).where(IssueCycleMetrics.is_ai_assisted == True)  # noqa: E712
+    q_total = select(func.count(IssueCycleMetrics.id))
+    if proj_conds:
+        q_ai = q_ai.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
+        q_total = q_total.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
+    ai_assisted_count = (await db.execute(q_ai)).scalar() or 0
+    total_metrics = (await db.execute(q_total)).scalar() or 1
     ai_assisted_pct = round(ai_assisted_count / total_metrics * 100, 1)
 
     return {
@@ -107,8 +139,11 @@ async def delivery(
     db: AsyncSession = Depends(get_db),
     start_date: date | None = Query(None),
     end_date: date | None = Query(None),
+    project: str | None = Query(None),
 ):
     """Delivery speed & reliability metrics."""
+    proj_conds = _project_filter(project)
+
     # Cycle time breakdown (avg coding, review, waiting)
     q = select(
         func.avg(IssueCycleMetrics.coding_time_hours),
@@ -116,6 +151,8 @@ async def delivery(
         func.avg(IssueCycleMetrics.waiting_time_hours),
         func.avg(IssueCycleMetrics.total_cycle_time_hours),
     )
+    if proj_conds:
+        q = q.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     row = (await db.execute(q)).one_or_none()
 
     cycle_breakdown = {
@@ -128,6 +165,8 @@ async def delivery(
     # PR throughput (merged per week — simplified)
     pr_date_conds = _date_filter(PullRequest.merged_at, start_date, end_date)
     q = select(func.count(PullRequest.id)).where(PullRequest.merged_at.isnot(None))
+    if proj_conds:
+        q = q.join(Issue, Issue.id == PullRequest.issue_id).where(and_(*proj_conds))
     if pr_date_conds:
         q = q.where(and_(*pr_date_conds))
     prs_merged = (await db.execute(q)).scalar() or 0
@@ -144,17 +183,24 @@ async def delivery(
 @router.get("/bottlenecks")
 async def bottlenecks(
     db: AsyncSession = Depends(get_db),
+    project: str | None = Query(None),
 ):
     """Where time is spent & where work gets stuck."""
+    proj_conds = _project_filter(project)
+
     # Review queue depth: open PRs with no review
     q = select(func.count(PullRequest.id)).where(
         PullRequest.state == "open",
         PullRequest.first_review_at.is_(None),
     )
+    if proj_conds:
+        q = q.join(Issue, Issue.id == PullRequest.issue_id).where(and_(*proj_conds))
     review_queue = (await db.execute(q)).scalar() or 0
 
     # Average review rounds (rework rate)
     q = select(func.avg(IssueCycleMetrics.review_rounds))
+    if proj_conds:
+        q = q.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     avg_review_rounds = (await db.execute(q)).scalar()
 
     # Time-in-stage distribution
@@ -163,6 +209,8 @@ async def bottlenecks(
         func.avg(IssueCycleMetrics.review_time_hours),
         func.avg(IssueCycleMetrics.waiting_time_hours),
     )
+    if proj_conds:
+        q = q.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     row = (await db.execute(q)).one_or_none()
 
     total = sum(v or 0 for v in (row[0], row[1], row[2])) if row else 0
@@ -178,6 +226,8 @@ async def bottlenecks(
     q = select(func.avg(IssueCycleMetrics.total_time_waiting_for_ai_secs)).where(
         IssueCycleMetrics.total_time_waiting_for_ai_secs.isnot(None)
     )
+    if proj_conds:
+        q = q.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     avg_ai_wait_secs = (await db.execute(q)).scalar()
 
     return {
@@ -194,13 +244,18 @@ async def bottlenecks(
 @router.get("/ai-impact")
 async def ai_impact(
     db: AsyncSession = Depends(get_db),
+    project: str | None = Query(None),
 ):
     """AI contribution, tool adoption, productivity comparison."""
+    proj_conds = _project_filter(project)
+
     # Avg AI percentage across merged PRs
     q = select(func.avg(PullRequest.ai_percentage)).where(
         PullRequest.merged_at.isnot(None),
         PullRequest.ai_percentage > 0,
     )
+    if proj_conds:
+        q = q.join(Issue, Issue.id == PullRequest.issue_id).where(and_(*proj_conds))
     avg_ai_pct = (await db.execute(q)).scalar()
 
     # Top agents (most used AI tools)
@@ -220,6 +275,9 @@ async def ai_impact(
     q_non_ai = select(func.avg(IssueCycleMetrics.total_cycle_time_hours)).where(
         IssueCycleMetrics.is_ai_assisted == False  # noqa: E712
     )
+    if proj_conds:
+        q_ai = q_ai.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
+        q_non_ai = q_non_ai.join(Issue, Issue.id == IssueCycleMetrics.issue_id).where(and_(*proj_conds))
     avg_ai_cycle = (await db.execute(q_ai)).scalar()
     avg_non_ai_cycle = (await db.execute(q_non_ai)).scalar()
 
@@ -281,6 +339,7 @@ async def ai_impact(
 @router.get("/ai-quality")
 async def ai_quality(
     db: AsyncSession = Depends(get_db),
+    project: str | None = Query(None),
 ):
     """AI quality signals, oversight flags, and risk metrics."""
     # Defect rate on AI code

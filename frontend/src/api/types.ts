@@ -120,4 +120,11 @@ export interface ApiFilters {
   end_date?: string;
   repo?: string;
   developer?: string;
+  project?: string;
+}
+
+/** Board info from /api/boards */
+export interface BoardInfo {
+  key: string;
+  issue_count: number;
 }
