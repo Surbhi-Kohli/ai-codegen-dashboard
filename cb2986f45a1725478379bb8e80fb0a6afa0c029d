@@ -1,0 +1,23 @@
+frontend/src/pages/AiQualityPage.tsx
+  2974e4737c668702 1-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "cb2986f45a1725478379bb8e80fb0a6afa0c029d",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 33,
+      "total_deletions": 0,
+      "accepted_lines": 2459,
+      "overriden_lines": 0
+    }
+  }
+}
