@@ -249,14 +249,27 @@ async def ai_impact(
     """AI contribution, tool adoption, productivity comparison."""
     proj_conds = _project_filter(project)
 
-    # Avg AI percentage across merged PRs
+    # Avg AI percentage -- try PR-level first, fall back to commit-level
     q = select(func.avg(PullRequest.ai_percentage)).where(
-        PullRequest.merged_at.isnot(None),
+        PullRequest.ai_percentage.isnot(None),
         PullRequest.ai_percentage > 0,
     )
     if proj_conds:
         q = q.join(Issue, Issue.id == PullRequest.issue_id).where(and_(*proj_conds))
     avg_ai_pct = (await db.execute(q)).scalar()
+
+    if avg_ai_pct is None:
+        q = select(
+            func.sum(Commit.ai_additions),
+            func.sum(Commit.human_additions),
+            func.sum(Commit.mixed_additions),
+        ).where(Commit.ai_additions.isnot(None))
+        row = (await db.execute(q)).one_or_none()
+        if row and row[0]:
+            total_ai = (row[0] or 0) + (row[2] or 0)
+            total_all = total_ai + (row[1] or 0)
+            if total_all > 0:
+                avg_ai_pct = total_ai / total_all * 100
 
     # Top agents (most used AI tools)
     q = (
@@ -329,6 +342,145 @@ async def ai_impact(
             continue
     tool_model_stats = sorted(tool_model_totals.values(), key=lambda x: x["additions"], reverse=True)
 
+    # ── Per-file AI attribution heatmap ──
+    file_q = (
+        select(
+            AIAttribution.file_path,
+            func.count(AIAttribution.id).label("regions"),
+            func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).label("ai_lines"),
+            AIAttribution.agent,
+            AIAttribution.model,
+        )
+        .group_by(AIAttribution.file_path, AIAttribution.agent, AIAttribution.model)
+        .order_by(func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).desc())
+    )
+    file_rows = (await db.execute(file_q)).all()
+    file_heatmap = [
+        {
+            "file": r[0],
+            "regions": r[1],
+            "ai_lines": int(r[2]) if r[2] else 0,
+            "agent": r[3],
+            "model": r[4],
+        }
+        for r in file_rows
+    ]
+
+    # ── Per-file line ranges (drill-down detail) ──
+    range_q = (
+        select(
+            AIAttribution.file_path,
+            AIAttribution.ai_lines_start,
+            AIAttribution.ai_lines_end,
+            AIAttribution.agent,
+            AIAttribution.model,
+            AIAttribution.prompt_id,
+            Commit.sha,
+        )
+        .join(Commit, Commit.id == AIAttribution.commit_id)
+        .order_by(AIAttribution.file_path, AIAttribution.ai_lines_start)
+    )
+    range_rows = (await db.execute(range_q)).all()
+    file_ranges: dict[str, list] = {}
+    for r in range_rows:
+        fp = r[0]
+        if fp not in file_ranges:
+            file_ranges[fp] = []
+        file_ranges[fp].append({
+            "start": r[1],
+            "end": r[2],
+            "lines": r[2] - r[1] + 1,
+            "agent": r[3],
+            "model": r[4],
+            "prompt_id": r[5],
+            "commit": r[6][:12] if r[6] else None,
+        })
+
+    # ── Commit timeline with AI stats ──
+    commit_q = (
+        select(Commit)
+        .where(Commit.ai_additions.isnot(None), Commit.ai_additions > 0)
+        .order_by(Commit.committed_at.desc())
+    )
+    commit_rows = (await db.execute(commit_q)).scalars().all()
+    commit_timeline = []
+    for c in commit_rows:
+        tmb = {}
+        if c.tool_model_breakdown:
+            try:
+                tmb = json.loads(c.tool_model_breakdown)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        models_used = []
+        if isinstance(tmb, dict):
+            for k in tmb:
+                parts = k.split("::", 1)
+                models_used.append(parts[1] if len(parts) > 1 else k)
+
+        commit_timeline.append({
+            "sha": c.sha[:12],
+            "message": c.message[:80],
+            "author": c.author,
+            "committed_at": c.committed_at.isoformat() if c.committed_at else None,
+            "ai_additions": c.ai_additions,
+            "human_additions": c.human_additions,
+            "ai_accepted": c.ai_accepted,
+            "models": models_used,
+            "time_waiting_secs": c.time_waiting_for_ai_secs,
+        })
+
+    # ── Prompt activity (group by prompt ID) ──
+    prompt_q = (
+        select(
+            AIAttribution.prompt_id,
+            AIAttribution.agent,
+            AIAttribution.model,
+            AIAttribution.human_author,
+            func.count(AIAttribution.id).label("regions"),
+            func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).label("total_lines"),
+            func.group_concat(AIAttribution.file_path.distinct()).label("files"),
+        )
+        .where(AIAttribution.prompt_id.isnot(None))
+        .group_by(AIAttribution.prompt_id, AIAttribution.agent, AIAttribution.model, AIAttribution.human_author)
+        .order_by(func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).desc())
+    )
+    prompt_rows = (await db.execute(prompt_q)).all()
+    prompt_activity = [
+        {
+            "prompt_id": r[0][:16] if r[0] else None,
+            "agent": r[1],
+            "model": r[2],
+            "author": r[3],
+            "regions": r[4],
+            "total_lines": int(r[5]) if r[5] else 0,
+            "files": r[6].split(",") if r[6] else [],
+        }
+        for r in prompt_rows
+    ]
+
+    # ── Author AI contributions ──
+    author_q = (
+        select(
+            AIAttribution.human_author,
+            AIAttribution.agent,
+            func.count(AIAttribution.id).label("attributions"),
+            func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).label("ai_lines"),
+        )
+        .where(AIAttribution.human_author.isnot(None))
+        .group_by(AIAttribution.human_author, AIAttribution.agent)
+        .order_by(func.sum(AIAttribution.ai_lines_end - AIAttribution.ai_lines_start + 1).desc())
+    )
+    author_rows = (await db.execute(author_q)).all()
+    author_contributions = [
+        {
+            "author": r[0],
+            "agent": r[1],
+            "attributions": r[2],
+            "ai_lines": int(r[3]) if r[3] else 0,
+        }
+        for r in author_rows
+    ]
+
     return {
         "avg_ai_code_pct": round(avg_ai_pct, 1) if avg_ai_pct else None,
         "top_agents": top_agents,
@@ -343,6 +495,11 @@ async def ai_impact(
         },
         "avg_time_waiting_for_ai_secs": round(avg_wait_secs, 0) if avg_wait_secs else None,
         "tool_model_breakdown": tool_model_stats,
+        "file_heatmap": file_heatmap,
+        "file_ranges": file_ranges,
+        "commit_timeline": commit_timeline,
+        "prompt_activity": prompt_activity,
+        "author_contributions": author_contributions,
     }
 
 

@@ -154,6 +154,13 @@ async def _upsert_pull_request(
     pr.additions = pr_data.get("additions")
     pr.deletions = pr_data.get("deletions")
 
+    # List API doesn't return additions/deletions; fetch individual PR if missing
+    if pr.additions is None:
+        detail = await _fetch_pr_detail(full_name, pr_number)
+        if detail:
+            pr.additions = detail.get("additions")
+            pr.deletions = detail.get("deletions")
+
     # State handling
     if pr_data.get("merged_at"):
         pr.state = "merged"
@@ -177,7 +184,36 @@ async def _upsert_pull_request(
     # Fetch commits for this PR
     await _fetch_and_store_commits(db, pr.id, full_name, pr_number)
 
+    # Compute ai_percentage from linked commits' git-ai data
+    commit_rows = await db.execute(
+        select(Commit.ai_additions, Commit.human_additions, Commit.mixed_additions)
+        .where(Commit.pull_request_id == pr.id)
+    )
+    total_ai = 0
+    total_all = 0
+    for row in commit_rows.all():
+        ai = row[0] or 0
+        human = row[1] or 0
+        mixed = row[2] or 0
+        total_ai += ai + mixed
+        total_all += ai + human + mixed
+    if total_all > 0:
+        pr.ai_percentage = round(total_ai / total_all * 100, 1)
+        pr.ai_lines_added = total_ai
+
     await db.flush()
+
+
+async def _fetch_pr_detail(full_name: str, pr_number: int) -> dict | None:
+    """Fetch a single PR's full details (includes additions/deletions)."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(
+            f"https://api.github.com/repos/{full_name}/pulls/{pr_number}",
+            headers=_auth_header(),
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    return None
 
 
 async def _fetch_and_store_reviews(
