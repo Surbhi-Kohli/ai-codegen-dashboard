@@ -1,0 +1,56 @@
+backend/app/routers/dashboard.py
+  40c53a31f3736899 48-69,79,83,87-88,94-95,98,100-101,104,107-108,114-120,142,145-146,154-155,168-169,186,189-190,196-197,202-203,212-213,229-230,247,250-251,257-258,278-280,342
+frontend/src/api/client.ts
+  40c53a31f3736899 25,29-37
+frontend/src/api/types.ts
+  40c53a31f3736899 123-129
+frontend/src/components/GlobalFilters.tsx
+  40c53a31f3736899 1,3,13-14,16-24,34,40-55
+  244a09483b745f70 25-26,29,60,68,70-71,73-75,78-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "741ed11bc6f2b4679afa927b4038dc4490e1fd11",
+  "prompts": {
+    "244a09483b745f70": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "65cf3b84-f9c7-42db-9bc8-d53b51fef7b5",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 1110,
+      "total_deletions": 2,
+      "accepted_lines": 1110,
+      "overriden_lines": 0
+    },
+    "40c53a31f3736899": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "23d19bbe-ddbd-4f9d-9e24-b210a9ad05b6",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 639,
+      "total_deletions": 13,
+      "accepted_lines": 636,
+      "overriden_lines": 0
+    },
+    "63aaa5ab1a6832a7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "360d3a31-718b-4ff1-abbc-6aa96898db59",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 589,
+      "total_deletions": 0,
+      "accepted_lines": 588,
+      "overriden_lines": 2
+    }
+  }
+}
