@@ -16,6 +16,9 @@ import {
   getMockIssueDetail,
 } from "./mock-data";
 
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
 function buildParams(filters: ApiFilters): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.start_date) params.set("start_date", filters.start_date);
@@ -38,14 +41,14 @@ export async function fetchBoards(): Promise<{ key: string; issue_count: number 
 }
 
 async function fetchJson<T>(url: string, fallback: T): Promise<T> {
-  try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    return await res.json();
-  } catch {
-    console.warn(`Backend unavailable for ${url}, using mock data`);
-    return fallback;
+  if (USE_MOCKS) return fallback;
+
+  const res = await fetch(`${API_BASE}${url}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`API ${res.status}: ${body || res.statusText}`);
   }
+  return await res.json();
 }
 
 export function fetchOverview(filters: ApiFilters): Promise<OverviewResponse> {

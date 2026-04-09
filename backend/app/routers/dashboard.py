@@ -305,13 +305,26 @@ async def ai_impact(
     tool_model_totals: dict[str, dict] = {}
     for raw in breakdown_rows:
         try:
-            entries = json.loads(raw)
+            parsed = json.loads(raw)
+
+            entries: list[dict] = []
+            if isinstance(parsed, list):
+                entries = parsed
+            elif isinstance(parsed, dict):
+                # git-ai v3.0.0: {"tool::model": {stats...}}
+                for compound_key, stats in parsed.items():
+                    if isinstance(stats, dict):
+                        parts = compound_key.split("::", 1)
+                        tool = parts[0] if parts else "unknown"
+                        model = parts[1] if len(parts) > 1 else "unknown"
+                        entries.append({"tool": tool, "model": model, **stats})
+
             for entry in entries:
                 key = f"{entry.get('tool', 'unknown')}/{entry.get('model', 'unknown')}"
                 if key not in tool_model_totals:
                     tool_model_totals[key] = {"tool": entry.get("tool"), "model": entry.get("model"), "additions": 0, "accepted": 0}
-                tool_model_totals[key]["additions"] += entry.get("additions", 0)
-                tool_model_totals[key]["accepted"] += entry.get("accepted", 0)
+                tool_model_totals[key]["additions"] += entry.get("ai_additions", entry.get("additions", 0))
+                tool_model_totals[key]["accepted"] += entry.get("ai_accepted", entry.get("accepted", 0))
         except (json.JSONDecodeError, TypeError):
             continue
     tool_model_stats = sorted(tool_model_totals.values(), key=lambda x: x["additions"], reverse=True)

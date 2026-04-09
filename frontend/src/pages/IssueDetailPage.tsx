@@ -25,6 +25,9 @@ export default function IssueDetailPage() {
       <p className="text-sm text-gray-400 mb-6">
         {issue.type} &middot; {issue.status} &middot; Created{" "}
         {new Date(issue.created_at).toLocaleDateString()}
+        {issue.resolved_at && (
+          <> &middot; Resolved {new Date(issue.resolved_at).toLocaleDateString()}</>
+        )}
       </p>
 
       {cycle_metrics && (
@@ -40,10 +43,29 @@ export default function IssueDetailPage() {
           <KpiCard
             label="Review"
             value={cycle_metrics.review_time_hours != null ? `${cycle_metrics.review_time_hours}h` : "—"}
+            subtitle={cycle_metrics.review_rounds != null ? `${cycle_metrics.review_rounds} round${cycle_metrics.review_rounds !== 1 ? "s" : ""}` : undefined}
           />
           <KpiCard
             label="AI Assisted"
             value={cycle_metrics.is_ai_assisted ? `${cycle_metrics.ai_percentage ?? 0}%` : "No"}
+          />
+          <KpiCard
+            label="AI Accepted Ratio"
+            value={cycle_metrics.ai_accepted_ratio != null ? `${cycle_metrics.ai_accepted_ratio}%` : "—"}
+            subtitle="committed as-is"
+          />
+          <KpiCard
+            label="AI Wait Time"
+            value={
+              cycle_metrics.total_time_waiting_for_ai_secs != null
+                ? `${(cycle_metrics.total_time_waiting_for_ai_secs / 60).toFixed(1)}m`
+                : "—"
+            }
+            subtitle="total across commits"
+          />
+          <KpiCard
+            label="Primary Tool"
+            value={cycle_metrics.primary_tool ?? "—"}
           />
         </div>
       )}
@@ -82,8 +104,14 @@ export default function IssueDetailPage() {
                   <span className="text-gray-200">{pr.title}</span>
                   <span className="text-gray-500 ml-2">by {pr.author}</span>
                 </div>
-                <div className="flex items-center gap-4 text-gray-400">
+                <div className="flex items-center gap-4 text-gray-400 text-xs">
                   <span>AI {pr.ai_percentage}%</span>
+                  {pr.opened_at && (
+                    <span>opened {new Date(pr.opened_at).toLocaleDateString()}</span>
+                  )}
+                  {pr.merged_at && (
+                    <span>merged {new Date(pr.merged_at).toLocaleDateString()}</span>
+                  )}
                   <span
                     className={
                       pr.state === "merged"
