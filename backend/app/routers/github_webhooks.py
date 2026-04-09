@@ -56,7 +56,30 @@ async def github_webhook(
         await _handle_push(db, data)
 
     await db.commit()
+
+    # Run enrichment after processing
+    await _run_enrichment(db)
+
     return {"status": "ok"}
+
+
+async def _run_enrichment(db: AsyncSession) -> None:
+    """Run enrichment tasks after data ingestion."""
+    from app.enrichment.issue_pr_linker import link_unlinked_prs
+    from app.enrichment.ai_code_correlator import correlate_all_untagged
+    from app.enrichment.cycle_metrics import recompute_all
+
+    try:
+        # Link PRs to issues
+        await link_unlinked_prs(db)
+        # Correlate review comments with AI code
+        await correlate_all_untagged(db)
+        # Recompute cycle metrics
+        await recompute_all(db)
+        await db.commit()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Enrichment failed: {e}")
 
 
 async def _handle_pull_request(db: AsyncSession, data: dict) -> None:
