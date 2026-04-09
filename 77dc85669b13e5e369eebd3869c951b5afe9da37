@@ -1,0 +1,27 @@
+frontend/src/components/Layout.tsx
+  2974e4737c668702 1-57
+frontend/src/App.tsx
+  2974e4737c668702 2,4-6,11-19
+frontend/src/components/GlobalFilters.tsx
+  2974e4737c668702 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "77dc85669b13e5e369eebd3869c951b5afe9da37",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 2,
+      "accepted_lines": 2154,
+      "overriden_lines": 0
+    }
+  }
+}

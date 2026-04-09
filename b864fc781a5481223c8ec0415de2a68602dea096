@@ -1,0 +1,25 @@
+frontend/src/__tests__/OverviewPage.test.tsx
+  2974e4737c668702 1-33
+frontend/src/pages/OverviewPage.tsx
+  2974e4737c668702 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "b864fc781a5481223c8ec0415de2a68602dea096",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2147,
+      "overriden_lines": 0
+    }
+  }
+}

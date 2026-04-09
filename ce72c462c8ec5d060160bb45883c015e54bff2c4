@@ -1,0 +1,23 @@
+backend/app/main.py
+  2974e4737c668702 4,27-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "ce72c462c8ec5d060160bb45883c015e54bff2c4",
+  "prompts": {
+    "2974e4737c668702": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "334161f0-9a26-4e2f-855f-a163ecd4fd14",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ronan Dsouza",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 10,
+      "accepted_lines": 2058,
+      "overriden_lines": 0
+    }
+  }
+}
