@@ -1,0 +1,35 @@
+frontend/src/api/client.ts
+  849ef9339ff8359f 65-77
+backend/seed_jira_demo.py
+  849ef9339ff8359f 1-295
+backend/app/integrations/webex_notifier.py
+  849ef9339ff8359f 1-165
+backend/app/ingestion/github_poller.py
+  849ef9339ff8359f 141,207-214
+frontend/src/pages/AiImpactPage.tsx
+  849ef9339ff8359f 1,17,44-66,379-420
+backend/app/ingestion/jira_poller.py
+  849ef9339ff8359f 41,52-53,56-59,63-66,72-73,75,77,84-105,139-140,187
+backend/app/routers/dashboard.py
+  849ef9339ff8359f 63-64,70-71,74,78,86-88,616-648
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "a4988bfd7b8e6d8c56985a5b10acd6d43b370412",
+  "prompts": {
+    "849ef9339ff8359f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c552550f-aa69-41ca-9323-191e41887a44",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Anushka Parey",
+      "messages": [],
+      "total_additions": 637,
+      "total_deletions": 106,
+      "accepted_lines": 634,
+      "overriden_lines": 0
+    }
+  }
+}
