@@ -106,8 +106,20 @@ def get_ai_notes(repo_path: str, sha: str) -> dict | None:
     output = run_git(["notes", "--ref=ai", "show", sha], repo_path)
     if not output:
         return None
+
+    # git-ai v3.0.0 format: preamble lines + "---" separator + JSON body
+    json_str = output
+    if "---" in output:
+        parts = output.split("---", 1)
+        json_str = parts[1].strip()
+        preamble = parts[0].strip()
+
     try:
-        return json.loads(output)
+        parsed = json.loads(json_str)
+        # v3.0.0 wraps prompts under a "prompts" key; flatten for our extractor
+        if "prompts" in parsed:
+            return {"_preamble": preamble if "---" in output else None, **parsed}
+        return parsed
     except json.JSONDecodeError:
         logger.warning("Failed to parse git notes JSON for %s", sha)
         return None
@@ -126,6 +138,40 @@ def get_ai_blame(repo_path: str, file_path: str) -> list[dict] | None:
     except json.JSONDecodeError:
         logger.warning("Failed to parse git ai blame JSON for %s", file_path)
         return None
+
+
+def _parse_preamble_ranges(preamble: str) -> dict[str, dict[str, list[list[int]]]]:
+    """Parse v3.0.0 preamble lines like 'file.py\\n  prompt_id 1-10,20-30' into ranges."""
+    result: dict[str, dict[str, list[list[int]]]] = {}
+    current_file = None
+    for line in preamble.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if not line.startswith(" ") and not line.startswith("\t"):
+            current_file = stripped
+        elif current_file:
+            parts = stripped.split(None, 1)
+            if len(parts) == 2:
+                prompt_id, range_str = parts
+                ranges: list[list[int]] = []
+                for segment in range_str.split(","):
+                    segment = segment.strip()
+                    if "-" in segment:
+                        try:
+                            s, e = segment.split("-", 1)
+                            ranges.append([int(s), int(e)])
+                        except ValueError:
+                            pass
+                    else:
+                        try:
+                            n = int(segment)
+                            ranges.append([n, n])
+                        except ValueError:
+                            pass
+                if ranges:
+                    result.setdefault(prompt_id, {}).setdefault(current_file, []).extend(ranges)
+    return result
 
 
 async def extract_commit(db: AsyncSession, repo_path: str, sha: str) -> bool:
@@ -178,13 +224,21 @@ async def extract_commit(db: AsyncSession, repo_path: str, sha: str) -> bool:
             select(AIAttribution.id).where(AIAttribution.commit_id == commit.id)
         )
         if not existing_attrs.scalars().first():
-            for prompt_id, prompt_data in notes.items():
+            # v3.0.0: prompts are under a "prompts" key; also handle preamble ranges
+            prompts = notes.get("prompts", {})
+            preamble = notes.get("_preamble", "")
+            preamble_ranges = _parse_preamble_ranges(preamble) if preamble else {}
+
+            if not prompts:
+                prompts = {k: v for k, v in notes.items() if k not in ("_preamble", "schema_version", "git_ai_version", "base_commit_sha", "prompts")}
+
+            for prompt_id, prompt_data in prompts.items():
                 agent_id = prompt_data.get("agent_id", {})
                 agent = agent_id.get("tool", "unknown")
                 model = agent_id.get("model")
                 human_author = prompt_data.get("human_author")
                 messages_url = prompt_data.get("messages_url")
-                ranges = prompt_data.get("ranges", {})
+                ranges = prompt_data.get("ranges", preamble_ranges.get(prompt_id, {}))
 
                 for file_path, line_ranges in ranges.items():
                     for line_range in line_ranges:
