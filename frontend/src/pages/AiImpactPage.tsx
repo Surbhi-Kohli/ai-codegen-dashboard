@@ -38,10 +38,10 @@ export default function AiImpactPage() {
     { name: "Human-edited", value: d.ai_accepted_vs_edited.human_edited, color: "#ff9f0a" },
   ];
 
-  const toolBreakdown = d.tool_model_breakdown.map((t, i) => ({
+  const toolBreakdown = d.tool_model_breakdown.map((t) => ({
     name: `${t.tool}/${t.model}`,
     additions: t.additions,
-    color: ["#0a84ff", "#30d158", "#ff9f0a", "#ff453a", "#bf5af2"][i % 5],
+    accepted: t.accepted,
   }));
 
   return (
@@ -112,19 +112,20 @@ export default function AiImpactPage() {
 
       {toolBreakdown.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Tool & Model Adoption</h3>
-          <ResponsiveContainer width="100%" height={Math.max(150, toolBreakdown.length * 40)}>
+          <h3 className="text-sm font-semibold text-gray-300 mb-4">Tool & Model: Generated vs Accepted</h3>
+          <ResponsiveContainer width="100%" height={Math.max(150, toolBreakdown.length * 50)}>
             <BarChart data={toolBreakdown} layout="vertical">
               <XAxis type="number" stroke="#636366" tick={{ fill: "#86868b", fontSize: 12 }} />
               <YAxis dataKey="name" type="category" stroke="#636366" tick={{ fill: "#86868b", fontSize: 11 }} width={200} />
               <Tooltip contentStyle={{ background: "#2d2d2f", border: "1px solid #424245", borderRadius: 6 }} />
-              <Bar dataKey="additions" radius={[0, 4, 4, 0]}>
-                {toolBreakdown.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Bar>
+              <Bar dataKey="additions" name="Generated" fill="#0a84ff" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="accepted" name="Accepted as-is" fill="#30d158" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          <div className="flex gap-6 mt-3 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#0a84ff] inline-block" /> Generated</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#30d158] inline-block" /> Accepted as-is</span>
+          </div>
         </div>
       )}
     </div>
