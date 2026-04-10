@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   BarChart,
@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import KpiCard from "../components/KpiCard";
 import { useApi } from "../hooks/useApi";
-import { fetchOverview, fetchDelivery, fetchBottlenecks, fetchPRs, sendWebexNotification } from "../api/client";
+import { fetchOverview, fetchDelivery, fetchBottlenecks, sendWebexOverview } from "../api/client";
 import type { ApiFilters } from "../api/types";
 
 const TOOLTIP_STYLE = { background: "#2d2d2f", border: "1px solid #424245", borderRadius: 6 };
@@ -24,21 +24,16 @@ export default function OverviewPage() {
   const delivery = useApi(() => fetchDelivery(filters), [filters]);
   const bottlenecks = useApi(() => fetchBottlenecks(filters), [filters]);
 
-  const [prs, setPrs] = useState<any[]>([]);
   const [webexStatus, setWebexStatus] = useState<string | null>(null);
   const [webexSending, setWebexSending] = useState(false);
 
-  useEffect(() => {
-    fetchPRs().then(setPrs);
-  }, []);
-
-  const handleWebexSend = async (prId: number) => {
+  const handleWebexSend = async () => {
     setWebexSending(true);
     setWebexStatus(null);
     try {
-      const result = await sendWebexNotification(prId);
+      const result = await sendWebexOverview();
       if (result.status === "sent") {
-        setWebexStatus(`Sent to Webex for PR #${result.pr_number}`);
+        setWebexStatus("Team summary sent to Webex");
       } else {
         setWebexStatus(`${result.status}: ${result.reason || result.detail || "unknown"}`);
       }
@@ -82,30 +77,13 @@ export default function OverviewPage() {
             Executive snapshot of team performance — delivery speed, cycle time, and bottlenecks
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-6">
-          <select
-            className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1.5 w-48 focus:outline-none focus:border-blue-500"
-            defaultValue=""
-            id="overview-pr-select"
-          >
-            <option value="" disabled>Select a PR...</option>
-            {prs.map((pr: any) => (
-              <option key={pr.id} value={pr.id}>
-                #{pr.number} — {pr.title?.slice(0, 30)}
-              </option>
-            ))}
-          </select>
-          <button
-            className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-            disabled={webexSending}
-            onClick={() => {
-              const sel = document.getElementById("overview-pr-select") as HTMLSelectElement;
-              if (sel.value) handleWebexSend(Number(sel.value));
-            }}
-          >
-            {webexSending ? "Sending..." : "Send to Webex"}
-          </button>
-        </div>
+        <button
+          className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap shrink-0 ml-6"
+          disabled={webexSending}
+          onClick={handleWebexSend}
+        >
+          {webexSending ? "Sending..." : "Send Summary to Webex"}
+        </button>
       </div>
 
       {webexStatus && (

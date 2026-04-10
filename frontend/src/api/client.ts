@@ -87,3 +87,11 @@ export async function sendWebexNotification(prId: number): Promise<any> {
   });
   return res.json();
 }
+
+export async function sendWebexOverview(): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/notify-overview`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+  });
+  return res.json();
+}

@@ -626,6 +626,71 @@ async def send_webex_pr_notification(
     return result
 
 
+@router.post("/notify-overview")
+async def send_webex_overview(
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a team overview summary to Webex."""
+    from app.config import settings
+    import httpx
+
+    if not settings.webex_bot_token or not settings.webex_review_room_id:
+        return {"status": "skipped", "reason": "Webex not configured"}
+
+    # Gather overview stats
+    kpis_q = select(
+        func.count(Issue.id).label("total"),
+        func.count(Issue.id).filter(Issue.status.in_(DONE_STATUSES)).label("resolved"),
+    )
+    row = (await db.execute(kpis_q)).one()
+    total_issues, resolved_issues = row.total, row.resolved
+
+    merged_count = (await db.execute(
+        select(func.count(PullRequest.id)).where(PullRequest.merged_at.isnot(None))
+    )).scalar() or 0
+    open_count = (await db.execute(
+        select(func.count(PullRequest.id)).where(PullRequest.state == "open")
+    )).scalar() or 0
+
+    avg_ai_pct = (await db.execute(
+        select(func.avg(PullRequest.ai_percentage)).where(PullRequest.ai_percentage.isnot(None))
+    )).scalar()
+
+    avg_cycle = (await db.execute(
+        select(func.avg(IssueCycleMetrics.total_cycle_time_hours))
+    )).scalar()
+
+    review_queue = (await db.execute(
+        select(func.count(PullRequest.id)).where(
+            PullRequest.state == "open", PullRequest.merged_at.is_(None)
+        )
+    )).scalar() or 0
+
+    msg = f"""**Team Overview Summary**
+---
+| Metric | Value |
+|---|---|
+| Issues | {resolved_issues} / {total_issues} resolved |
+| PRs Merged | {merged_count} |
+| PRs Open | {open_count} |
+| Avg AI Code | {round(avg_ai_pct, 1) if avg_ai_pct else '—'}% |
+| Avg Cycle Time | {round(avg_cycle, 1) if avg_cycle else '—'}h |
+| Review Queue | {review_queue} PRs awaiting review |
+
+_Sent from AI Codegen Dashboard_"""
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://webexapis.com/v1/messages",
+            headers={"Authorization": f"Bearer {settings.webex_bot_token}"},
+            json={"roomId": settings.webex_review_room_id, "markdown": msg},
+            timeout=15,
+        )
+    if resp.status_code in (200, 201):
+        return {"status": "sent"}
+    return {"status": "error", "reason": resp.text}
+
+
 @router.get("/prs")
 async def list_prs(
     db: AsyncSession = Depends(get_db),
