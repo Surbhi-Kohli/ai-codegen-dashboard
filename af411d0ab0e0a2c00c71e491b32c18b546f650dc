@@ -1,0 +1,25 @@
+backend/app/ingestion/github_poller.py
+  849ef9339ff8359f 38,46-53
+backend/app/enrichment/quality_metrics.py
+  849ef9339ff8359f 36,195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "af411d0ab0e0a2c00c71e491b32c18b546f650dc",
+  "prompts": {
+    "849ef9339ff8359f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c552550f-aa69-41ca-9323-191e41887a44",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Anushka Parey",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 6,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
