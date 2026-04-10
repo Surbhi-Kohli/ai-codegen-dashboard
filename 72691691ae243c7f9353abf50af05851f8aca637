@@ -1,0 +1,107 @@
+backend/app/enrichment/quality_metrics.py
+  fe8925d16f980f84 85-92
+  63aaa5ab1a6832a7 145,147,158-164,198
+backend/app/routers/github_webhooks.py
+  fe8925d16f980f84 169-180,194-195
+  63aaa5ab1a6832a7 10,218,221-229
+frontend/src/pages/AiQualityPage.tsx
+  63aaa5ab1a6832a7 24,28-31,72,94-98
+backend/app/enrichment/revert_detector.py
+  63aaa5ab1a6832a7 1-156
+backend/app/routers/dashboard.py
+  63aaa5ab1a6832a7 466,474-477,524,532
+frontend/src/api/mock-data.ts
+  63aaa5ab1a6832a7 69,84
+frontend/src/api/types.ts
+  63aaa5ab1a6832a7 62,76
+backend/app/ingestion/github_poller.py
+  63aaa5ab1a6832a7 18,195,310,312,342,344,346-349,354-388
+  fe8925d16f980f84 281-292,303-304
+backend/app/db/models.py
+  63aaa5ab1a6832a7 177-178,181,184-197,299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "72691691ae243c7f9353abf50af05851f8aca637",
+  "prompts": {
+    "244a09483b745f70": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "65cf3b84-f9c7-42db-9bc8-d53b51fef7b5",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "40c53a31f3736899": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "23d19bbe-ddbd-4f9d-9e24-b210a9ad05b6",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "63aaa5ab1a6832a7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "360d3a31-718b-4ff1-abbc-6aa96898db59",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 3133,
+      "total_deletions": 8,
+      "accepted_lines": 269,
+      "overriden_lines": 0
+    },
+    "a68cf5841a7c4226": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "cb5aacf6-a8fd-483c-acb1-e9a47745e8da",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "e38e863e4e1ddc8e": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "d172be00-d68f-4a66-a967-635f4a9d3c49",
+        "model": "unknown"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "fe8925d16f980f84": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "651b5910-e552-4fda-8449-6468ea74550c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Surbhi Kohli",
+      "messages": [],
+      "total_additions": 36,
+      "total_deletions": 9,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    }
+  }
+}
