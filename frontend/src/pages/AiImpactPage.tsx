@@ -104,8 +104,45 @@ export default function AiImpactPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-1">AI Impact</h2>
-      <p className="text-sm text-gray-400 mb-6">How is AI helping?</p>
+      {/* ── Header + Webex ── */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-1">AI Impact</h2>
+          <p className="text-sm text-gray-400">How is AI helping?</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-6">
+          <select
+            className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1.5 w-48 focus:outline-none focus:border-blue-500"
+            defaultValue=""
+            id="pr-select"
+          >
+            <option value="" disabled>Select a PR...</option>
+            {prs.map((pr: any) => (
+              <option key={pr.id} value={pr.id}>
+                #{pr.number} — {pr.title?.slice(0, 30)}{pr.ai_percentage ? ` (${pr.ai_percentage}% AI)` : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+            disabled={webexSending}
+            onClick={() => {
+              const sel = document.getElementById("pr-select") as HTMLSelectElement;
+              if (sel.value) handleWebexSend(Number(sel.value));
+            }}
+          >
+            {webexSending ? "Sending..." : "Send to Webex"}
+          </button>
+        </div>
+      </div>
+
+      {webexStatus && (
+        <div className={`mb-4 text-sm px-3 py-2 rounded-lg ${
+          webexStatus.startsWith("Sent") ? "bg-green-900/30 text-green-400 border border-green-800" : "bg-red-900/30 text-red-400 border border-red-800"
+        }`}>
+          {webexStatus}
+        </div>
+      )}
 
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -386,47 +423,6 @@ export default function AiImpactPage() {
         </div>
       )}
 
-      {/* ── Webex Notification ── */}
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-gray-300">Send to Webex</h3>
-          <svg className="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z"/>
-          </svg>
-        </div>
-        <p className="text-xs text-gray-500 mb-4">Post a PR's AI attribution summary to a Webex space in real time.</p>
-        <div className="flex items-center gap-3">
-          <select
-            className="bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg px-3 py-2 flex-1 focus:outline-none focus:border-blue-500"
-            defaultValue=""
-            id="pr-select"
-          >
-            <option value="" disabled>Select a PR...</option>
-            {prs.map((pr: any) => (
-              <option key={pr.id} value={pr.id}>
-                #{pr.number} — {pr.title} ({pr.state}{pr.ai_percentage ? `, ${pr.ai_percentage}% AI` : ""})
-              </option>
-            ))}
-          </select>
-          <button
-            className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors whitespace-nowrap"
-            disabled={webexSending}
-            onClick={() => {
-              const sel = document.getElementById("pr-select") as HTMLSelectElement;
-              if (sel.value) handleWebexSend(Number(sel.value));
-            }}
-          >
-            {webexSending ? "Sending..." : "Send to Webex"}
-          </button>
-        </div>
-        {webexStatus && (
-          <div className={`mt-3 text-sm px-3 py-2 rounded-lg ${
-            webexStatus.startsWith("Sent") ? "bg-green-900/30 text-green-400 border border-green-800" : "bg-red-900/30 text-red-400 border border-red-800"
-          }`}>
-            {webexStatus}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

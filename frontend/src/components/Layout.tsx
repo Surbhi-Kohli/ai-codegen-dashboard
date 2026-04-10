@@ -5,8 +5,6 @@ import type { ApiFilters } from "../api/types";
 
 const NAV_ITEMS = [
   { to: "/overview", label: "Overview" },
-  { to: "/delivery", label: "Delivery" },
-  { to: "/bottlenecks", label: "Bottlenecks" },
   { to: "/ai-impact", label: "AI Impact" },
   { to: "/ai-quality", label: "AI Quality" },
 ];
