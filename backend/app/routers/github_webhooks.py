@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.models import Commit, PullRequest, Repository, ReviewComment
+from app.db.models import Commit, CommitFile, PullRequest, Repository, ReviewComment
 from app.db.session import get_db
 
 router = APIRouter()
@@ -166,7 +166,18 @@ async def _handle_pr_review_comment(db: AsyncSession, data: dict) -> None:
     existing = await db.execute(
         select(ReviewComment).where(ReviewComment.github_comment_id == comment["id"])
     )
-    if existing.scalar_one_or_none():
+    existing_rc = existing.scalar_one_or_none()
+
+    created = datetime.fromisoformat(comment["created_at"].replace("Z", "+00:00"))
+    updated_str = comment.get("updated_at")
+    updated = datetime.fromisoformat(updated_str.replace("Z", "+00:00")) if updated_str else None
+    resolved_at = updated if (updated and updated != created) else None
+
+    if existing_rc:
+        # Handle "edited" or re-delivered events: update resolved_at
+        if resolved_at and not existing_rc.resolved_at:
+            existing_rc.resolved_at = resolved_at
+        await db.flush()
         return
 
     is_bot = comment["user"].get("type") == "Bot"
@@ -180,7 +191,8 @@ async def _handle_pr_review_comment(db: AsyncSession, data: dict) -> None:
         line_number=comment.get("line") or comment.get("original_line"),
         is_bot=is_bot,
         state=data.get("action"),
-        created_at=datetime.fromisoformat(comment["created_at"].replace("Z", "+00:00")),
+        created_at=created,
+        resolved_at=resolved_at,
     )
     db.add(rc)
     await db.flush()
@@ -203,7 +215,17 @@ async def _handle_push(db: AsyncSession, data: dict) -> None:
             committed_at=datetime.fromisoformat(
                 commit_data["timestamp"].replace("Z", "+00:00")
             ),
+            repository_id=repo.id,
         )
         db.add(c)
+        await db.flush()
+
+        # Store file-level changes from push payload
+        for fp in commit_data.get("added", []):
+            db.add(CommitFile(commit_id=c.id, file_path=fp, status="added"))
+        for fp in commit_data.get("modified", []):
+            db.add(CommitFile(commit_id=c.id, file_path=fp, status="modified"))
+        for fp in commit_data.get("removed", []):
+            db.add(CommitFile(commit_id=c.id, file_path=fp, status="removed"))
 
     await db.flush()

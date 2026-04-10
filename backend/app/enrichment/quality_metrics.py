@@ -82,13 +82,16 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
     ai_review_blind_accepts = 0
 
     for comment in bot_comments:
-        if comment.resolved_at and comment.created_at:
-            resolution_time = (comment.resolved_at - comment.created_at).total_seconds()
+        resolved = comment.resolved_at
+        # Fallback: if never explicitly resolved but PR is merged,
+        # the developer effectively dismissed the comment by merging.
+        if resolved is None and pr.merged_at:
+            resolved = pr.merged_at
+
+        if resolved and comment.created_at:
+            resolution_time = (resolved - comment.created_at).total_seconds()
             if resolution_time < 120:  # resolved in < 2 minutes
                 ai_review_blind_accepts += 1
-        elif comment.resolved_at is None:
-            # Thread was never explicitly responded to — could also be blind acceptance
-            pass
 
     # ── Follow-up fixes within 24h ───────────────────────────────────
     followup_fixes_24h = 0
@@ -139,7 +142,9 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
 
     # ── Revert detection ─────────────────────────────────────────────
     reverted_within_7d = False
+    ai_lines_removed_ratio = 0.0
     if pr.merged_at:
+        # Fast path: explicit revert via commit message
         revert_cutoff = pr.merged_at + timedelta(days=7)
         revert_result = await db.execute(
             select(Commit).where(
@@ -150,6 +155,13 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
         )
         if revert_result.scalars().first():
             reverted_within_7d = True
+            ai_lines_removed_ratio = 1.0
+        else:
+            # Line-level detection: check if AI-attributed lines were removed
+            from app.enrichment.revert_detector import detect_ai_line_removal
+            reverted_within_7d, ai_lines_removed_ratio = await detect_ai_line_removal(
+                db, pr, attributions
+            )
 
     # ── Defect linkage ───────────────────────────────────────────────
     defect_linked = False
@@ -183,6 +195,7 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
     metrics.has_tests_for_ai_code = has_tests_for_ai_code
     metrics.total_time_waiting_for_ai_secs = total_wait_secs if total_wait_secs > 0 else None
     metrics.reverted_within_7d = reverted_within_7d
+    metrics.ai_lines_removed_ratio = ai_lines_removed_ratio
     metrics.defect_linked = defect_linked
     metrics.computed_at = datetime.now(timezone.utc)
 

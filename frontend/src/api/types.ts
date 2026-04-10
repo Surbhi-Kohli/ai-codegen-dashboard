@@ -59,6 +59,7 @@ export interface AiQualityResponse {
   kpis: {
     ai_defect_rate: number;
     ai_revert_rate: number;
+    avg_ai_lines_removed_ratio: number;
     avg_unmodified_ratio: number | null;
     blind_acceptance_rate: number;
     prs_without_tests_pct: number;
@@ -72,6 +73,7 @@ export interface AiQualityResponse {
     unmodified_ratio: number;
     blind_accepts: number;
     reverted: boolean;
+    ai_lines_removed_ratio: number | null;
     defect_linked: boolean;
   }[];
 }

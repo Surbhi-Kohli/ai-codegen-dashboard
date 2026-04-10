@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.models import Commit, PullRequest, Repository, ReviewComment
+from app.db.models import Commit, CommitFile, PullRequest, Repository, ReviewComment
 from app.db.session import async_session
 
 logger = logging.getLogger(__name__)
@@ -192,7 +192,7 @@ async def _upsert_pull_request(
     await _fetch_and_store_reviews(db, pr.id, full_name, pr_number)
 
     # Fetch commits for this PR
-    await _fetch_and_store_commits(db, pr.id, full_name, pr_number)
+    await _fetch_and_store_commits(db, pr.id, repo.id, full_name, pr_number)
 
     # Compute ai_percentage from linked commits' git-ai data
     commit_rows = await db.execute(
@@ -278,7 +278,18 @@ async def _fetch_and_store_reviews(
                     ReviewComment.github_comment_id == comment["id"]
                 )
             )
-            if existing.scalar_one_or_none():
+            existing_rc = existing.scalar_one_or_none()
+
+            created = _parse_github_datetime(comment["created_at"])
+            updated = _parse_github_datetime(comment.get("updated_at"))
+            # If updated_at differs from created_at, the comment was
+            # edited or its thread was resolved — use as resolved_at proxy.
+            resolved_at = updated if (updated and created and updated != created) else None
+
+            if existing_rc:
+                # Update resolved_at on re-poll if we now have a value
+                if resolved_at and not existing_rc.resolved_at:
+                    existing_rc.resolved_at = resolved_at
                 continue
 
             rc = ReviewComment(
@@ -289,15 +300,16 @@ async def _fetch_and_store_reviews(
                 file_path=comment.get("path"),
                 line_number=comment.get("line") or comment.get("original_line"),
                 is_bot=comment["user"].get("type") == "Bot",
-                created_at=_parse_github_datetime(comment["created_at"]),
+                created_at=created,
+                resolved_at=resolved_at,
             )
             db.add(rc)
 
 
 async def _fetch_and_store_commits(
-    db: AsyncSession, pr_id: int, full_name: str, pr_number: int
+    db: AsyncSession, pr_id: int, repo_id: int, full_name: str, pr_number: int
 ) -> None:
-    """Fetch and store commits for a PR."""
+    """Fetch and store commits for a PR, including per-file changes."""
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.get(
             f"https://api.github.com/repos/{full_name}/pulls/{pr_number}/commits",
@@ -327,10 +339,53 @@ async def _fetch_and_store_commits(
                 )
                 db.add(commit)
 
-            # Link commit to PR
+            # Link commit to PR and repo
             commit.pull_request_id = pr_id
+            commit.repository_id = repo_id
+
+            await db.flush()
+
+            # Fetch per-file changes for this commit
+            await _fetch_and_store_commit_files(db, commit.id, full_name, sha, client)
 
         await db.flush()
+
+
+async def _fetch_and_store_commit_files(
+    db: AsyncSession, commit_id: int, full_name: str, sha: str,
+    client: httpx.AsyncClient,
+) -> None:
+    """Fetch file-level changes for a single commit from GitHub API."""
+    resp = await client.get(
+        f"https://api.github.com/repos/{full_name}/commits/{sha}",
+        headers=_auth_header(),
+    )
+    if resp.status_code != 200:
+        return
+
+    data = resp.json()
+    for file_data in data.get("files", []):
+        file_path = file_data["filename"]
+
+        # Check if already stored
+        existing = await db.execute(
+            select(CommitFile).where(
+                CommitFile.commit_id == commit_id,
+                CommitFile.file_path == file_path,
+            )
+        )
+        if existing.scalar_one_or_none():
+            continue
+
+        cf = CommitFile(
+            commit_id=commit_id,
+            file_path=file_path,
+            status=file_data.get("status", "modified"),
+            additions=file_data.get("additions"),
+            deletions=file_data.get("deletions"),
+            patch=file_data.get("patch"),
+        )
+        db.add(cf)
 
 
 def _parse_github_datetime(dt_str: str | None) -> datetime | None:

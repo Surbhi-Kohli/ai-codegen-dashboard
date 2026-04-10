@@ -21,9 +21,14 @@ export default function AiQualityPage() {
         Is AI-generated code meeting our engineering standards?
       </p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         <KpiCard label="AI Defect Rate" value={`${kpis.ai_defect_rate}%`} />
         <KpiCard label="AI Revert Rate" value={`${kpis.ai_revert_rate}%`} />
+        <KpiCard
+          label="AI Lines Removed"
+          value={`${kpis.avg_ai_lines_removed_ratio}%`}
+          subtitle="avg lines reverted"
+        />
         <KpiCard
           label="Unmodified AI Ratio"
           value={kpis.avg_unmodified_ratio != null ? `${kpis.avg_unmodified_ratio}%` : "—"}
@@ -64,6 +69,7 @@ export default function AiQualityPage() {
                   <th className="py-2 pr-4">Unmodified</th>
                   <th className="py-2 pr-4">Blind Accepts</th>
                   <th className="py-2 pr-4">Reverted</th>
+                  <th className="py-2 pr-4">Lines Removed</th>
                   <th className="py-2">Defect</th>
                 </tr>
               </thead>
@@ -83,6 +89,11 @@ export default function AiQualityPage() {
                     <td className="py-2 pr-4">
                       <span className={f.reverted ? "text-red-400" : "text-gray-500"}>
                         {f.reverted ? "Yes" : "No"}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-4">
+                      <span className={f.ai_lines_removed_ratio && f.ai_lines_removed_ratio >= 50 ? "text-red-400" : "text-gray-400"}>
+                        {f.ai_lines_removed_ratio != null ? `${Math.round(f.ai_lines_removed_ratio * 100)}%` : "—"}
                       </span>
                     </td>
                     <td className="py-2">

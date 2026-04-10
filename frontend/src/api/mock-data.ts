@@ -66,6 +66,7 @@ export const MOCK_AI_QUALITY: AiQualityResponse = {
   kpis: {
     ai_defect_rate: 8.3,
     ai_revert_rate: 0.0,
+    avg_ai_lines_removed_ratio: 12.5,
     avg_unmodified_ratio: 72.4,
     blind_acceptance_rate: 12.5,
     prs_without_tests_pct: 50.0,
@@ -80,6 +81,7 @@ export const MOCK_AI_QUALITY: AiQualityResponse = {
       unmodified_ratio: 85.2,
       blind_accepts: 1,
       reverted: false,
+      ai_lines_removed_ratio: 0,
       defect_linked: false,
     },
     {

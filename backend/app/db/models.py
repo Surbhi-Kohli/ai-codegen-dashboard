@@ -174,8 +174,27 @@ class Commit(Base):
 
     pull_request_id: Mapped[int | None] = mapped_column(ForeignKey("pull_requests.id"))
 
+    repository_id: Mapped[int | None] = mapped_column(ForeignKey("repositories.id"))
+
     pull_request: Mapped["PullRequest | None"] = relationship(back_populates="commits")
     ai_attributions: Mapped[list["AIAttribution"]] = relationship(back_populates="commit")
+    files: Mapped[list["CommitFile"]] = relationship(back_populates="commit")
+
+
+class CommitFile(Base):
+    __tablename__ = "commit_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    commit_id: Mapped[int] = mapped_column(ForeignKey("commits.id"))
+    file_path: Mapped[str] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(20))  # added, modified, removed, renamed
+    additions: Mapped[int | None] = mapped_column(Integer)
+    deletions: Mapped[int | None] = mapped_column(Integer)
+    patch: Mapped[str | None] = mapped_column(Text)  # unified diff hunk
+
+    __table_args__ = (UniqueConstraint("commit_id", "file_path", name="uq_commit_file"),)
+
+    commit: Mapped["Commit"] = relationship(back_populates="files")
 
 
 class AIAttribution(Base):
@@ -277,6 +296,7 @@ class AIQualityMetrics(Base):
     has_tests_for_ai_code: Mapped[bool | None] = mapped_column(Boolean)
     total_time_waiting_for_ai_secs: Mapped[int | None] = mapped_column(Integer)
     reverted_within_7d: Mapped[bool | None] = mapped_column(Boolean)
+    ai_lines_removed_ratio: Mapped[float | None] = mapped_column(Float)
     defect_linked: Mapped[bool | None] = mapped_column(Boolean)
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 

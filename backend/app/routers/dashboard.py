@@ -463,13 +463,18 @@ async def ai_quality(
     )).scalar() or 0
     defect_rate = round(defect_count / total_ai_prs * 100, 1)
 
-    # Revert rate
+    # Revert rate (message-based OR line-level detection)
     revert_count = (await db.execute(
         select(func.count(AIQualityMetrics.id)).where(
             AIQualityMetrics.reverted_within_7d == True  # noqa: E712
         )
     )).scalar() or 0
     revert_rate = round(revert_count / total_ai_prs * 100, 1)
+
+    # Average AI lines removed ratio across all PRs
+    avg_ai_lines_removed = (await db.execute(
+        select(func.avg(AIQualityMetrics.ai_lines_removed_ratio))
+    )).scalar()
 
     # Avg unmodified AI ratio
     avg_unmodified = (await db.execute(
@@ -516,6 +521,7 @@ async def ai_quality(
             "unmodified_ratio": qm.unmodified_ai_ratio,
             "blind_accepts": qm.ai_review_blind_accepts,
             "reverted": qm.reverted_within_7d,
+            "ai_lines_removed_ratio": qm.ai_lines_removed_ratio,
             "defect_linked": qm.defect_linked,
         })
 
@@ -523,6 +529,7 @@ async def ai_quality(
         "kpis": {
             "ai_defect_rate": defect_rate,
             "ai_revert_rate": revert_rate,
+            "avg_ai_lines_removed_ratio": round(avg_ai_lines_removed * 100, 1) if avg_ai_lines_removed else 0.0,
             "avg_unmodified_ratio": round(avg_unmodified, 1) if avg_unmodified else None,
             "blind_acceptance_rate": blind_accept_rate,
             "prs_without_tests_pct": no_test_pct,
