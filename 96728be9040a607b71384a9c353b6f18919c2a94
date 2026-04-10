@@ -1,0 +1,25 @@
+backend/app/ingestion/gitai_extractor.py
+  849ef9339ff8359f 50
+backend/app/routers/dashboard.py
+  849ef9339ff8359f 340,343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "96728be9040a607b71384a9c353b6f18919c2a94",
+  "prompts": {
+    "849ef9339ff8359f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c552550f-aa69-41ca-9323-191e41887a44",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Anushka Parey",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
