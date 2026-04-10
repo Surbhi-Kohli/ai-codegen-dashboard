@@ -192,7 +192,7 @@ async def _upsert_pull_request(
     await _fetch_and_store_reviews(db, pr.id, full_name, pr_number)
 
     # Fetch commits for this PR
-    await _fetch_and_store_commits(db, pr.id, repo.id, full_name, pr_number)
+    await _fetch_and_store_commits(db, pr.id, repo_id, full_name, pr_number)
 
     # Compute ai_percentage from linked commits' git-ai data
     commit_rows = await db.execute(
