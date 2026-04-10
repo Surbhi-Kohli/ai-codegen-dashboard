@@ -213,14 +213,6 @@ async def _upsert_pull_request(
 
     await db.flush()
 
-    if is_new_pr:
-        try:
-            from app.integrations.webex_notifier import notify_pr
-            result = await notify_pr(db, pr.id)
-            logger.info("Webex notify for PR #%d: %s", pr_number, result.get("status"))
-        except Exception:
-            logger.debug("Webex notification skipped or failed for PR #%d", pr_number, exc_info=True)
-
 
 async def _fetch_pr_detail(full_name: str, pr_number: int) -> dict | None:
     """Fetch a single PR's full details (includes additions/deletions)."""
