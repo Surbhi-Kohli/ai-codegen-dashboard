@@ -265,39 +265,48 @@ export default function AiImpactPage() {
         </div>
       )}
 
-      {/* ── NEW: Commit Timeline ── */}
+      {/* ── Commit Timeline (AI + Human) ── */}
       {commitTimeline.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 mb-6">
-          <h3 className="text-sm font-semibold text-gray-300 mb-1">AI Commit Timeline</h3>
-          <p className="text-xs text-gray-500 mb-4">Each commit that contained AI-generated code, with model and line counts.</p>
+          <h3 className="text-sm font-semibold text-gray-300 mb-1">Commit Timeline</h3>
+          <p className="text-xs text-gray-500 mb-4">All commits showing AI vs human-written code.</p>
           <div className="space-y-3">
-            {commitTimeline.map((c: any) => (
-              <div key={c.sha} className="flex items-start gap-4 border-l-2 border-blue-500/50 pl-4 py-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs text-blue-400">{c.sha}</span>
-                    <span className="text-gray-600 text-xs">
-                      {c.committed_at ? new Date(c.committed_at).toLocaleString() : ""}
-                    </span>
+            {commitTimeline.map((c: any) => {
+              const isAI = (c.ai_additions ?? 0) > 0;
+              return (
+                <div key={c.sha} className={`flex items-start gap-4 border-l-2 pl-4 py-2 ${isAI ? "border-blue-500/50" : "border-gray-600/50"}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`font-mono text-xs ${isAI ? "text-blue-400" : "text-gray-500"}`}>{c.sha}</span>
+                      <span className="text-gray-600 text-xs">
+                        {c.committed_at ? new Date(c.committed_at).toLocaleString() : ""}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-200 truncate">{c.message}</div>
+                    <div className="flex items-center gap-4 mt-1 text-xs">
+                      <span className="text-gray-500">by <span className="text-gray-300">{c.author}</span></span>
+                      {isAI && <span className="text-green-400">+{c.ai_additions} AI</span>}
+                      {(c.human_additions ?? 0) > 0 && <span className="text-gray-400">+{c.human_additions} human</span>}
+                      {isAI && c.models?.length > 0 && <span className="text-purple-400">{c.models.join(", ")}</span>}
+                      {(c.time_waiting_secs ?? 0) > 0 && (
+                        <span className="text-yellow-400">waited {c.time_waiting_secs}s</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-200 truncate">{c.message}</div>
-                  <div className="flex items-center gap-4 mt-1 text-xs">
-                    <span className="text-gray-500">by <span className="text-gray-300">{c.author}</span></span>
-                    <span className="text-green-400">+{c.ai_additions} AI</span>
-                    {c.human_additions > 0 && <span className="text-gray-400">+{c.human_additions} human</span>}
-                    <span className="text-purple-400">{c.models?.join(", ")}</span>
-                    {c.time_waiting_secs > 0 && (
-                      <span className="text-yellow-400">waited {c.time_waiting_secs}s</span>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {isAI ? (
+                      <div className="bg-blue-500/20 text-blue-400 text-xs font-semibold px-2 py-0.5 rounded">
+                        {c.ai_accepted ?? c.ai_additions} AI accepted
+                      </div>
+                    ) : (
+                      <div className="bg-gray-700/30 text-gray-400 text-xs font-semibold px-2 py-0.5 rounded">
+                        human-written
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <div className="bg-blue-500/20 text-blue-400 text-xs font-semibold px-2 py-0.5 rounded">
-                    {c.ai_accepted ?? c.ai_additions} accepted
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

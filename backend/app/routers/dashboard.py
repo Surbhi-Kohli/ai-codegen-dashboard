@@ -199,7 +199,6 @@ async def ai_impact(
     # Avg AI percentage -- try PR-level first, fall back to commit-level
     q = select(func.avg(PullRequest.ai_percentage)).where(
         PullRequest.ai_percentage.isnot(None),
-        PullRequest.ai_percentage > 0,
     )
     avg_ai_pct = (await db.execute(q)).scalar()
 
@@ -338,10 +337,9 @@ async def ai_impact(
             "commit": r[6][:12] if r[6] else None,
         })
 
-    # ── Commit timeline with AI stats ──
+    # ── Commit timeline (all commits, AI and human) ──
     commit_q = (
         select(Commit)
-        .where(Commit.ai_additions.isnot(None), Commit.ai_additions > 0)
         .order_by(Commit.committed_at.desc())
     )
     commit_rows = (await db.execute(commit_q)).scalars().all()
@@ -646,6 +644,21 @@ async def list_prs(
         }
         for pr in prs
     ]
+
+
+@router.get("/boards")
+async def list_boards(db: AsyncSession = Depends(get_db)):
+    """Return distinct Jira project keys with issue counts."""
+    rows = (await db.execute(
+        select(
+            func.substr(Issue.jira_key, 1, func.instr(Issue.jira_key, "-") - 1).label("key"),
+            func.count().label("cnt"),
+        )
+        .where(Issue.jira_key.isnot(None))
+        .group_by("key")
+        .order_by(func.count().desc())
+    )).all()
+    return [{"key": r.key, "issue_count": r.cnt} for r in rows if r.key]
 
 
 # ── Enrichment triggers ──────────────────────────────────────────

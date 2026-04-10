@@ -63,6 +63,17 @@ export function fetchIssueDetail(jiraKey: string): Promise<IssueDetailResponse> 
   return fetchJson(`/api/issues/${jiraKey}`, getMockIssueDetail(jiraKey));
 }
 
+export async function fetchBoards(): Promise<{ key: string; issue_count: number }[]> {
+  if (USE_MOCKS) return [];
+  try {
+    const res = await fetch(`${API_BASE}/api/boards`, { headers: { Accept: "application/json" } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchPRs(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/api/prs`, { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
