@@ -1,0 +1,23 @@
+frontend/src/pages/OverviewPage.tsx
+  849ef9339ff8359f 91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "c3872fe3bc4c216913ad5459090aa0073557cfd2",
+  "prompts": {
+    "849ef9339ff8359f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c552550f-aa69-41ca-9323-191e41887a44",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Anushka Parey",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
