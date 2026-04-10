@@ -35,13 +35,22 @@ def _auth_header() -> dict[str, str]:
 
 
 async def poll_all_repos() -> None:
-    """Poll all configured GitHub repos."""
+    """Poll all configured GitHub repos, then recompute quality metrics."""
     for repo in settings.github_repo_list:
         full_name = f"{settings.github_org}/{repo}"
         try:
             await _poll_repo(full_name)
         except Exception:
             logger.exception("Failed to poll GitHub repo %s", full_name)
+
+    try:
+        from app.enrichment.quality_metrics import recompute_all
+        async with async_session() as db:
+            count = await recompute_all(db)
+            await db.commit()
+            logger.info("Recomputed quality metrics for %d PRs", count)
+    except Exception:
+        logger.exception("Failed to recompute quality metrics")
 
 
 async def _poll_repo(full_name: str) -> None:

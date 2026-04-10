@@ -33,7 +33,7 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
     """Compute or update AI quality metrics for a single PR."""
     pr_result = await db.execute(select(PullRequest).where(PullRequest.id == pr_id))
     pr = pr_result.scalar_one_or_none()
-    if not pr or not pr.merged_at:
+    if not pr:
         return None
 
     # Get commits and AI attributions
@@ -192,13 +192,10 @@ async def compute_for_pr(db: AsyncSession, pr_id: int) -> AIQualityMetrics | Non
 
 
 async def recompute_all(db: AsyncSession) -> int:
-    """Recompute quality metrics for all merged PRs with AI code."""
-    # Find merged PRs that have commits with AI attributions
+    """Recompute quality metrics for all PRs with commits."""
     result = await db.execute(
         select(PullRequest.id)
         .join(Commit, Commit.pull_request_id == PullRequest.id)
-        .join(AIAttribution, AIAttribution.commit_id == Commit.id)
-        .where(PullRequest.merged_at.isnot(None))
         .distinct()
     )
     pr_ids = [row[0] for row in result.all()]
