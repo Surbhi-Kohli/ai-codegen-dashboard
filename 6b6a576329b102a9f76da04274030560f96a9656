@@ -1,0 +1,27 @@
+frontend/src/api/client.ts
+  849ef9339ff8359f 66-76
+frontend/src/pages/AiImpactPage.tsx
+  849ef9339ff8359f 268,271-272,274-294,296-304,308-309
+backend/app/routers/dashboard.py
+  849ef9339ff8359f 340,649-663
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.7",
+  "base_commit_sha": "6b6a576329b102a9f76da04274030560f96a9656",
+  "prompts": {
+    "849ef9339ff8359f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c552550f-aa69-41ca-9323-191e41887a44",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "Anushka Parey",
+      "messages": [],
+      "total_additions": 62,
+      "total_deletions": 29,
+      "accepted_lines": 62,
+      "overriden_lines": 0
+    }
+  }
+}
