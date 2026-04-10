@@ -22,27 +22,39 @@ export default function AiQualityPage() {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
-        <KpiCard label="AI Defect Rate" value={`${kpis.ai_defect_rate}%`} />
-        <KpiCard label="AI Revert Rate" value={`${kpis.ai_revert_rate}%`} />
+        <KpiCard
+          label="AI Defect Rate"
+          value={`${kpis.ai_defect_rate}%`}
+          tooltip={"(AI PRs linked to Bug issues / Total AI PRs) × 100%\n\nA PR is defect-linked when its Jira issue type is \"Bug\". Tracks whether AI code produces bugs at a higher rate than human code."}
+        />
+        <KpiCard
+          label="AI Revert Rate"
+          value={`${kpis.ai_revert_rate}%`}
+          tooltip={"(Reverted AI PRs / Total AI PRs) × 100%\n\nDetected two ways:\n1. Commit message contains \"revert\" + PR number\n2. ≥50% of AI-attributed lines removed within 7 days (line-level diff analysis)"}
+        />
         <KpiCard
           label="AI Lines Removed"
           value={`${kpis.avg_ai_lines_removed_ratio}%`}
           subtitle="avg lines reverted"
+          tooltip={"Avg % of AI-attributed lines deleted in follow-up commits within 7 days of merge.\n\nUses git diff to check if AI line ranges were actually removed — not just commit message heuristics."}
         />
         <KpiCard
           label="Unmodified AI Ratio"
           value={kpis.avg_unmodified_ratio != null ? `${kpis.avg_unmodified_ratio}%` : "—"}
           subtitle="accepted as-is"
+          tooltip={"(AI lines committed as-is / Total AI lines) × 100%\n\nMeasures how much AI code is accepted without human edits. High ratio may indicate insufficient review. Requires git-ai CLI stats."}
         />
         <KpiCard
           label="Blind Accept Rate"
           value={`${kpis.blind_acceptance_rate}%`}
           subtitle="AI reviews dismissed fast"
+          tooltip={"(Bot review comments resolved in <2 min / Total bot review threads) × 100%\n\nTracks how often AI-generated review comments are dismissed without reading. Fast resolution suggests the reviewer didn't engage."}
         />
         <KpiCard
           label="No Tests"
           value={`${kpis.prs_without_tests_pct}%`}
           subtitle="AI PRs without tests"
+          tooltip={"(AI PRs without test files / Total AI PRs) × 100%\n\nFlags PRs containing AI code but no files in test/, tests/, spec/, or similar directories. AI code without tests is higher risk."}
         />
       </div>
 
