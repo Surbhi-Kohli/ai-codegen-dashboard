@@ -337,9 +337,10 @@ async def ai_impact(
             "commit": r[6][:12] if r[6] else None,
         })
 
-    # ── Commit timeline (all commits, AI and human) ──
+    # ── Commit timeline (all commits, AI and human, excluding git-notes bookkeeping) ──
     commit_q = (
         select(Commit)
+        .where(~Commit.message.like("Notes %by 'git notes%'"))
         .order_by(Commit.committed_at.desc())
     )
     commit_rows = (await db.execute(commit_q)).scalars().all()

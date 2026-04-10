@@ -47,7 +47,7 @@ def run_git(args: list[str], cwd: str) -> str | None:
 
 def get_commit_shas(repo_path: str, since: str | None = None) -> list[str]:
     """Get commit SHAs from the repo, optionally filtered by date."""
-    args = ["log", "--format=%H", "--no-merges"]
+    args = ["log", "--all", "--format=%H", "--no-merges", "--invert-grep", "--grep=Notes added by", "--grep=Notes removed by"]
     if since:
         args.append(f"--since={since}")
     output = run_git(args, repo_path)
