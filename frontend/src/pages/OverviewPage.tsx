@@ -88,7 +88,7 @@ export default function OverviewPage() {
 
       {webexStatus && (
         <div className={`mb-4 text-sm px-3 py-2 rounded-lg ${
-          webexStatus.startsWith("Sent") ? "bg-green-900/30 text-green-400 border border-green-800" : "bg-red-900/30 text-red-400 border border-red-800"
+          webexStatus.startsWith("Team summary sent") || webexStatus.startsWith("Sent") ? "bg-green-900/30 text-green-400 border border-green-800" : "bg-red-900/30 text-red-400 border border-red-800"
         }`}>
           {webexStatus}
         </div>
